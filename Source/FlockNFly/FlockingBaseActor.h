@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "BoidCharacter.generated.h"
+#include "GameFramework/Actor.h"
+#include "FlockingBaseActor.generated.h"
 
 class USphereComponent;
 class AFlockNFlyCharacter;
 
 /**  Struct containing boid data*/
 USTRUCT()
-struct FFlockingData
+struct FBoidData
 {
 	GENERATED_BODY()
 	
-	FFlockingData()
+	FBoidData()
 	{
 		Velocity = FVector::ZeroVector;
 		CurrentSpeed = 0.f;
@@ -63,19 +63,21 @@ struct FFlockingData
 
 
 UCLASS()
-class FLOCKNFLY_API ABoidCharacter : public ACharacter
+class FLOCKNFLY_API AFlockingBaseActor : public AActor
 {
 	GENERATED_BODY()
+	
+public:	
+	// Sets default values for this actor's properties
+	AFlockingBaseActor();
 
-public:
-	// Sets default values for this character's properties
-	ABoidCharacter();
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 
+public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	/** Bool for debugging*/
 	UPROPERTY(EditAnywhere, Category= "Debug")
@@ -83,7 +85,7 @@ public:
 
 	/** Struct containing data for flocking behavior*/
 	UPROPERTY(EditAnywhere, Category= "Flocking")
-	FFlockingData FlockingData;
+	FBoidData BoidData;
 
 	/** Static mesh comp*/
 	UPROPERTY(EditAnywhere, Category="Mesh")
@@ -92,10 +94,6 @@ public:
 	/** Static mesh comp*/
 	UPROPERTY(EditAnywhere, Category="Collision")
 	USphereComponent* CollisionComponent;
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 	/** Moves character towards specified current target location*/
 	void MoveTowardsLocation(float DeltaTime);

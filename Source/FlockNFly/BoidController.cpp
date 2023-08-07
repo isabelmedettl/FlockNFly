@@ -26,7 +26,6 @@ void ABoidController::SetAim()
 	
 	if (PlayerCharacter)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Has player")));
 		AimRotation = UKismetMathLibrary::FindLookAtRotation(GetCharacter()->GetActorLocation(), PlayerCharacter->GetActorLocation());
 	}
 	GetCharacter()->SetActorRotation(FRotator(AimRotation.Pitch, AimRotation.Yaw, 0.f));
