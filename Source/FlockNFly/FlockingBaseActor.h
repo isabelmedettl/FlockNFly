@@ -11,17 +11,17 @@ class AFlockNFlyCharacter;
 
 /**  Struct containing boid data*/
 USTRUCT()
-struct FBoidData
+struct FFlockingActorData
 {
 	GENERATED_BODY()
 	
-	FBoidData()
+	FFlockingActorData()
 	{
 		Velocity = FVector::ZeroVector;
-		CurrentSpeed = 0.f;
-		TargetSpeed = 0.f;
+		TargetSpeed = 100.f;
+		CurrentSpeed = TargetSpeed;
 		Direction = FVector::ZeroVector;
-		PreferredDistance = 0.f;
+		PreferredDistanceToTarget = 200.f;
 		DistanceToTarget = 0.f;
 		bIsClosestToTarget = false;
 		Size = 0.f;
@@ -33,11 +33,11 @@ struct FBoidData
 
 	/** Current speed of boid*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
-	double CurrentSpeed = 550.f;
+	double CurrentSpeed = 100.f;
 
 	/** Target speed of boid to lerp toward*/
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	double TargetSpeed = 550.f;
+	double TargetSpeed = 100.f;
 
 	/** Current direction in which entity is moving in i world space*/
 	UPROPERTY(VisibleAnywhere, Category = "Flocking")
@@ -45,7 +45,7 @@ struct FBoidData
 
 	/** Distance to keep from other entities*/
 	UPROPERTY(EditAnywhere, Category = "Flocking")
-	double PreferredDistance = 0.f;
+	double PreferredDistanceToTarget = 50.f;
 
 	/** Distance to current target*/
 	UPROPERTY(VisibleAnywhere, Category = "Flocking")
@@ -58,6 +58,10 @@ struct FBoidData
 	/** Size of boid*/
 	UPROPERTY(VisibleAnywhere, Category="Boid")
 	double Size;
+
+	/** Set radius to other entites that are considered neighbours to entity*/
+	UPROPERTY(VisibleAnywhere, Category="Flocking")
+	double DesiredDistanceToNeighbours = 0.f;
 	
 };
 
@@ -85,18 +89,21 @@ public:
 
 	/** Struct containing data for flocking behavior*/
 	UPROPERTY(EditAnywhere, Category= "Flocking")
-	FBoidData BoidData;
+	FFlockingActorData FlockingData;
 
 	/** Static mesh comp*/
 	UPROPERTY(EditAnywhere, Category="Mesh")
-	UStaticMeshComponent* MeshComponent;
+	UStaticMeshComponent* FlockingMeshComponent;
 
 	/** Static mesh comp*/
 	UPROPERTY(EditAnywhere, Category="Collision")
 	USphereComponent* CollisionComponent;
 
 	/** Moves character towards specified current target location*/
-	void MoveTowardsLocation(float DeltaTime);
+	FVector CalculateDirectionToTarget(float DeltaTime);
+
+	/** Applies cohesion rules*/
+	FVector Cohere(const TArray<AFlockingBaseActor*> *Entities);
 
 private:
 

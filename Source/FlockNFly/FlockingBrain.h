@@ -80,7 +80,40 @@ private:
 	/** Pointer to player Character*/
 	AFlockNFlyCharacter* PlayerCharacter;
 
-	void SpawnEntity(FVector SpawnLocation);
+	void SpawnEntity(const FVector SpawnLocation);
 
+
+	// ======= Weights and methods for flocking behaviors ========= //
+
+	/** Looping timer handle for applying specified behaviors on entities*/
+	FTimerHandle ApplyBehaviorTimerHandle;
+
+	/** Multiplyer for applying cohesion force*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	int32 CohesionWeight = 0.f;
+	
+	/** Multiplyer for applying separation force*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	int32 SeparationWeight = 0.f;
+
+	/** Multiplyer for applying alignment force*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	int32 AlignmentWeight = 0.f;
+
+	/** Loops through collection of entities and applies behaviors */
+	void ApplyBehaviors();
+
+	/** Adjust all flocking entities to uphold cohesion rules*/
+	void AdjustForCohesion();
+
+	/** Alters entities position to correspond with average alignment of nearby entities, taking the position of entities within certain radius and steers entity towards the average position of those entites*/
+	FVector CalculateComputationDirection();
+	
+	
+	// =========== Flocking variables ============= //
+	/** Counter for how many neighbours an entity has that are within set radius of entity*/
+	int32 CloseEntityCount = 0;
+
+	
 	
 };

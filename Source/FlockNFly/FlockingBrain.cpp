@@ -25,7 +25,7 @@ void AFlockingBrain::BeginPlay()
 	PlayerCharacter = Cast<AFlockNFlyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if( PlayerCharacter != nullptr)
 	{
-		FlockingBaseActorClass = AFlockingBaseActor::StaticClass();
+		//FlockingBaseActorClass = AFlockingBaseActor::StaticClass();
 		
 		if (SpawnHeight < 0.f)
 		{
@@ -53,12 +53,11 @@ void AFlockingBrain::SpawnBoids()
 	{
 		CalculatePossibleSpawnFormation();
 		
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Prepare to spawn ")));
-
-		for (FVector Location : SpawnLocations)
+		for (FVector Loc : SpawnLocations)
 		{
-			SpawnEntity(Location);
+			SpawnEntity(Loc);
 		}
+		
 	}	
 }
 
@@ -69,7 +68,6 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 		EntityRows = EntityColumns = 0;
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Calculating spawn formation ")));
 	// Calculate the ideal square shape based on number of boids to spawn
 	const double IdealWidth = UKismetMathLibrary::Sqrt(NumberOfEntities);
 	const double IdealHeight = UKismetMathLibrary::Sqrt(NumberOfEntities);
@@ -83,27 +81,24 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 	int32 EndX = (EntityColumns + 1) / 2;
 	int32 StartY = -(EntityRows - 1) / 2;
 	int32 EndY = (EntityRows + 1) / 2;
+	
 
 	// Spawn boids in calculated locations
 	int32 Counter = NumberOfEntities;
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	for (int X = StartX; X < EndX; X++)
 	{
 		for (int Y = StartY; Y < EndY; Y++)
 		{
-			FVector SpawnLocation = FVector::ZeroVector;
 			if (Counter > 0)
 			{
-				SpawnLocation = GetActorLocation() + FVector(X * DistanceBetweenEntities, Y * DistanceBetweenEntities, SpawnHeight);
-				DrawDebugSphere(GetWorld(), SpawnLocation, 30.f, 30, FColor::Black, false,6.f);
-				Counter--;
-			}
-			if (SpawnLocation != FVector::ZeroVector)
-			{
+				FVector SpawnLocation = GetActorLocation() + FVector(X * DistanceBetweenEntities, Y * DistanceBetweenEntities, SpawnHeight);
 				SpawnLocations.Add(SpawnLocation);
+				Counter--;
 			}
 		}
 	}
-	
 }
 
 bool AFlockingBrain::CheckCollisionAtSpawnLocation(const FVector NewLocation)
@@ -111,7 +106,7 @@ bool AFlockingBrain::CheckCollisionAtSpawnLocation(const FVector NewLocation)
 	return true;
 }
 
-void AFlockingBrain::SpawnEntity(FVector SpawnLocation)
+void AFlockingBrain::SpawnEntity(const FVector SpawnLocation)
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -119,84 +114,27 @@ void AFlockingBrain::SpawnEntity(FVector SpawnLocation)
 	Entities.Add(NewFlockingEntity);
 }
 
-/*
-	for (int32 i = 0; i < NumberOfBoids; ++i)
-	{
-		float AngleInDegrees = i * AngleIncrement;
-		float AngleInRadians = FMath::DegreesToRadians(AngleInDegrees);
-		FVector SpawnLocation = Center + FVector(FMath::Cos(AngleInRadians), FMath::Sin(AngleInRadians), 0) * Radius;
-
-		// Check for overlap at the potential spawn location
-		FCollisionShape CollisionShape;
-		CollisionShape.SetSphere(EntitySize);
-		FCollisionQueryParams QueryParams;
-		QueryParams.AddIgnoredActor(nullptr); // Ignore any specific actors if needed
-
-		bool bCanSpawn = !World->OverlapAnyTestByChannel(SpawnLocation, FQuat::Identity, ECC_Pawn, CollisionShape, QueryParams);
-
-		if (bCanSpawn)
-		{
-			AYourBoidActor* NewBoid = World->SpawnActor<YourBoidActor>(BoidClass, SpawnLocation, FRotator::ZeroRotator);
-
-			// Customize any boid-specific properties if needed
-			// e.g., NewBoid->SetMaxSpeed(100.0f);
-		}
-		else
-		{
-			// Handle overlapping spawn location, e.g., adjust the position or skip spawning this boid.
-			// You could try offsetting the SpawnLocation, decreasing NumEntities, or using a different formation.
-			Return false
-		}
-	}
-
-
-	MITT
-
-	
-bool AFlockingBrain::CalculatePossibleSpawnFormation()
+void AFlockingBrain::ApplyBehaviors()
 {
-	if (!GetWorld() || NumberOfBoids <= 0 || !BoidClass)
-	{
-		return false;
-	}
-	
-	const double AngleIncrement = 360.0f / NumberOfBoids;
-
-	// calculating positions in world space by evenly dividing specified circle based on number of boids to be spawned
-	FVector SpawnLocation = FVector::ZeroVector;
-	for (int32 i = 0; i < NumberOfBoids; i++)
-	{
-		double AngleDegrees = i * AngleIncrement;
-		double AngleRadians = FMath::DegreesToRadians(AngleDegrees);
-		SpawnLocation = SpawnArea->GetComponentLocation() + FVector(FMath::Cos(AngleRadians), FMath::Sin(AngleRadians), 0) * SpawnArea->GetScaledSphereRadius();
-		SpawnLocations.Add(SpawnLocation);
-	}
-	
-	return true;
 }
-	 *
-	 *
-	 *
-	 *
-* /*
-	* UWorld* World = GetWorld(); // Get a reference to the current world
 
-	if (!World)
+void AFlockingBrain::AdjustForCohesion()
+{
+	for (int i = 0; i < Entities.Num() - 1; i++)
 	{
-		return;
+		if (FVector::Dist(Entities[i]->GetActorLocation(), Entities[i + 1]->GetActorLocation()))
+		{
+			
+		}
 	}
+}
 
-	// Assuming you have a reference to your boid actor class (YourBoidActor)
-	TSubclassOf<YourBoidActor> BoidClass; 
+FVector AFlockingBrain::CalculateComputationDirection()
+{
+	return FVector::ZeroVector;
+}
 
-	TArray<FVector> FormationPositions = CalculateCircularFormationPositions(Center, Radius, NumEntities);
+// https://www.youtube.com/watch?v=IoKfQrlQ7rA
+// https://github.com/nature-of-code/noc-examples-processing/blob/master/chp06_agents/NOC_6_08_SeparationAndSeek/Vehicle.pde
+// ide - weight för hur viktigt det är att följa target/ följa flocken
 
-	for (const FVector& SpawnPosition : FormationPositions)
-	{
-		AYourBoidActor* NewBoid = World->SpawnActor<YourBoidActor>(BoidClass, SpawnPosition, FRotator::ZeroRotator);
-		
-		// Customize any boid-specific properties if needed
-		// e.g., NewBoid->SetMaxSpeed(100.0f);
-	}
-	 */
-	 

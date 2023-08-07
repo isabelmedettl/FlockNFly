@@ -15,20 +15,20 @@ AFlockingBaseActor::AFlockingBaseActor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoidMesh"));
-	MeshComponent->SetupAttachment(GetRootComponent());
-	MeshComponent->SetVisibility(true);
+	FlockingMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoidMesh"));
+	FlockingMeshComponent->SetupAttachment(GetRootComponent());
+	FlockingMeshComponent->SetVisibility(true);
 
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
-	CollisionComponent->SetupAttachment(GetRootComponent());
-	BoidData.Size = CollisionComponent->GetScaledSphereRadius();
+	CollisionComponent->SetupAttachment(FlockingMeshComponent);
+	FlockingData.Size = CollisionComponent->GetScaledSphereRadius();
 }
 
 // Called when the game starts or when spawned
 void AFlockingBaseActor::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	PlayerCharacter = Cast<AFlockNFlyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if( PlayerCharacter != nullptr )
 	{
@@ -45,6 +45,12 @@ void AFlockingBaseActor::BeginPlay()
 	{
 		GetWorldTimerManager().SetTimer(DebugTimerHandle, this, &AFlockingBaseActor::OnDebug, DrawDebugDelay, true, 0.1f); // Delay default = 2.f;
 	}
+
+	if (FlockingMeshComponent == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT(" No mesh comp ")));
+
+	}
 	
 }
 
@@ -55,34 +61,80 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 
 	if( PlayerCharacter != nullptr )
 	{
-		CurrentTargetLocation = PlayerCharacter->GetActorLocation() + PlayerCharacter->GetActorForwardVector() * 30.f;
+		CurrentTargetLocation = PlayerCharacter->GetActorLocation() + PlayerCharacter->GetActorForwardVector() * FlockingData.PreferredDistanceToTarget;
 	}
-	MoveTowardsLocation(DeltaTime);
+	
+	SetActorLocation(CalculateDirectionToTarget(DeltaTime));
 }
 
 
-void AFlockingBaseActor::MoveTowardsLocation(float DeltaTime)
+FVector AFlockingBaseActor::CalculateDirectionToTarget(float DeltaTime)
 {
+	/*
+	BoidData.Velocity = BoidData.CurrentSpeed * DeltaTime;
+	BoidData.CurrentSpeed = BoidData.Velocity / DeltaTime;
 	BoidData.CurrentSpeed = FMath::Lerp(BoidData.CurrentSpeed, BoidData.TargetSpeed, 0.1);
+	
+
+	const FRotator NewRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), CurrentTargetLocation);
+	SetActorRotation(FRotator(0, NewRotation.Yaw -90, 0));
+
+	float MoveDistance = BoidData.Velocity;
+	const FVector NewLocation = GetActorLocation() + BoidData.Velocity;
+
+	*/
+	
+	FlockingData.CurrentSpeed = FMath::Lerp(FlockingData.CurrentSpeed, FlockingData.TargetSpeed, 0.1);
+
+	// vel = currentspeed / deltatime
+	// vel = 1000m/s
+	// currentspeed = vel / deltatime
 
 	// Rotation
 	const FRotator NewRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), CurrentTargetLocation);
 	SetActorRotation(FRotator(0, NewRotation.Yaw -90, 0));
 	
-	BoidData.Direction = CurrentTargetLocation - GetActorLocation();
-	BoidData.Direction.Normalize();
+	FlockingData.Direction = CurrentTargetLocation - GetActorLocation();
+	FlockingData.Direction.Normalize();
+	// direction * vel / deltatime
+	// addera det där till current position
 
 	// Calculate the distance between the current location and the target location
-	BoidData.DistanceToTarget = FVector::Distance(CurrentTargetLocation, GetActorLocation());
+	FlockingData.DistanceToTarget = FVector::Distance(CurrentTargetLocation, GetActorLocation());
 
 	// Calculate distance the actor can move in this step based on the speed variable
-	float MoveDistance = BoidData.CurrentSpeed * DeltaTime;
-	MoveDistance = FMath::Min(MoveDistance, BoidData.DistanceToTarget);
-	const FVector NewLocation = GetActorLocation() + BoidData.Direction * MoveDistance;
-	SetActorLocation(NewLocation);
+	//float MoveDistance = FlockingData.CurrentSpeed * DeltaTime;
+	//MoveDistance = FMath::Min(MoveDistance, FlockingData.DistanceToTarget);
+	//FVector NewLocation = GetActorLocation() + FlockingData.Direction * MoveDistance;
+	//SetActorLocation(NewLocation);
 
-	// Update data in struct
-	//BoidData.Velocity = GetCharacterMovement()->Velocity;
+	// Calculate distance the actor can move in this step based on the speed variable
+	float MoveDistance = FlockingData.CurrentSpeed * DeltaTime;
+	MoveDistance = FMath::Min(MoveDistance, FlockingData.DistanceToTarget);
+	FlockingData.Velocity = FlockingData.Direction * MoveDistance;
+	const FVector NewDirection = GetActorLocation() + FlockingData.Velocity;
+	return NewDirection;
+}
+
+FVector AFlockingBaseActor::Cohere(const TArray<AFlockingBaseActor*> *Entities)
+{
+	FVector DesiredCohesion = FVector::ZeroVector;
+	int32 Counter = 0;
+
+	for (AFlockingBaseActor* Other : *Entities)
+	{
+		if (FlockingData.DesiredDistanceToNeighbours > 0.f && FVector::Distance(GetActorLocation(), Other->GetActorLocation()) < FlockingData.DesiredDistanceToNeighbours)
+		{
+			DesiredCohesion += Other->GetActorLocation();
+			Counter++;
+		}
+	}
+	if (Counter > 0)
+	{
+		const FVector NewDirection = DesiredCohesion / Counter;
+		return NewDirection;
+	}
+	return FVector::ZeroVector;
 }
 
 void AFlockingBaseActor::OnDebug() const
