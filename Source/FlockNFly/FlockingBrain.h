@@ -79,7 +79,7 @@ private:
 	/** Pointer to player Character*/
 	AFlockNFlyCharacter* PlayerCharacter;
 
-	void SpawnEntity(const FVector SpawnLocation, int32 ID);
+	void SpawnEntity(const FVector &SpawnLocation, int32 ID);
 
 
 	// ======= Weights and methods for flocking behaviors ========= //
@@ -93,15 +93,19 @@ private:
 
 	/** Multiplyer for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 CohesionWeight = 0.f;
+	int32 CohesionWeight = 1.5f;
+
+	/** Multiplyer for applying cohesion force*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	int32 SeekWeight = 1.f;
 	
 	/** Multiplyer for applying separation force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 SeparationWeight = 0.f;
+	int32 SeparationWeight = 1.2f;
 
 	/** Multiplyer for applying alignment force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 AlignmentWeight = 0.f;
+	int32 AlignmentWeight = 1.f;
 
 	/** Loops through collection of entities and applies behaviors */
 	void ApplyBehaviors();

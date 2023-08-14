@@ -57,7 +57,9 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 		CurrentTargetLocation = PlayerCharacter->GetActorLocation() + PlayerCharacter->GetActorForwardVector() * FlockingData.PreferredDistanceToTarget;
 	}
 
-	SetActorLocation(Seek(DeltaTime));
+	// TODO: Make it not setting location but by applying force to velocity
+	Seek(DeltaTime);
+	SetActorLocation(GetActorLocation() + FlockingData.Velocity);
 }
 
 void AFlockingBaseActor::ApplyForce(FVector Force)
@@ -66,28 +68,9 @@ void AFlockingBaseActor::ApplyForce(FVector Force)
 }
 
 
-
-FVector AFlockingBaseActor::Seek(float DeltaTime)
+void AFlockingBaseActor::Seek(float DeltaTime)
 {
-	/*
-	BoidData.Velocity = BoidData.CurrentSpeed * DeltaTime;
-	BoidData.CurrentSpeed = BoidData.Velocity / DeltaTime;
-	BoidData.CurrentSpeed = FMath::Lerp(BoidData.CurrentSpeed, BoidData.TargetSpeed, 0.1);
-	
-
-	const FRotator NewRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), CurrentTargetLocation);
-	SetActorRotation(FRotator(0, NewRotation.Yaw -90, 0));
-
-	float MoveDistance = BoidData.Velocity;
-	const FVector NewLocation = GetActorLocation() + BoidData.Velocity;
-
-	*/
-	
 	FlockingData.CurrentSpeed = FMath::Lerp(FlockingData.CurrentSpeed, FlockingData.TargetSpeed, 0.1);
-
-	// vel = currentspeed / deltatime
-	// vel = 1000m/s
-	// currentspeed = vel / deltatime
 
 	// Rotation
 	const FRotator NewRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), CurrentTargetLocation);
@@ -100,22 +83,30 @@ FVector AFlockingBaseActor::Seek(float DeltaTime)
 
 	// Calculate the distance between the current location and the target location
 	FlockingData.DistanceToTarget = FVector::Distance(CurrentTargetLocation, GetActorLocation());
-
-	// Calculate distance the actor can move in this step based on the speed variable
-	//float MoveDistance = FlockingData.CurrentSpeed * DeltaTime;
-	//MoveDistance = FMath::Min(MoveDistance, FlockingData.DistanceToTarget);
-	//FVector NewLocation = GetActorLocation() + FlockingData.Direction * MoveDistance;
-	//SetActorLocation(NewLocation);
-
+	
 	// Calculate distance the actor can move in this step based on the speed variable
 	float MoveDistance = FlockingData.CurrentSpeed * DeltaTime;
 	MoveDistance = FMath::Min(MoveDistance, FlockingData.DistanceToTarget);
 	FlockingData.Velocity = FlockingData.Direction * MoveDistance;
-	const FVector NewDirection = GetActorLocation() + FlockingData.Velocity;
-	return NewDirection;
+	//const FVector NewDirection = GetActorLocation() + FlockingData.Velocity;
+	//return NewDirection;
+	
 }
 
-FVector AFlockingBaseActor::Cohere(TArray<AFlockingBaseActor*> Entities) 
+void AFlockingBaseActor::UpdateFlocking(TArray<AFlockingBaseActor*> &Entities, double SeekWeight, double CohesionWeight, double AlignmentWeight, double SeparationWeight)
+{
+	Cohesion = UpdateCohesion(Entities);
+
+	// apply weights to forces
+	Cohesion.X *= CohesionWeight;
+	Cohesion.Y *= CohesionWeight;
+
+	// Separation and alignment
+	
+	ApplyForce(Cohesion);
+}
+
+FVector AFlockingBaseActor::UpdateCohesion(TArray<AFlockingBaseActor*> &Entities) const
 {
 	FVector DesiredCohesion = FVector::ZeroVector;
 	int32 Counter = 0;
@@ -124,12 +115,11 @@ FVector AFlockingBaseActor::Cohere(TArray<AFlockingBaseActor*> Entities)
 	{
 		if (FlockingData.ID != Other->FlockingData.ID)
 		{
-			if (FVector::Distance(GetActorLocation(), Other->GetActorLocation()) < FlockingData.DesiredDistanceToNeighbours)
+			if ((Other->GetActorLocation() - GetActorLocation()).Length() < FlockingData.MaxDesiredDistanceToNeighbours * 2)
 			{
-				DrawDebugLine(GetWorld(), GetActorLocation(), Other->GetActorLocation(), FColor::Cyan, false, 0.5f, 0, 30);
-				// TODO: göra en compare func, ge alla boids ett nr när de spawnar, jämföra dem
-				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("HAs Actors nearby")));
-				DesiredCohesion += Other->GetActorLocation();
+				DrawDebugLine(GetWorld(), GetActorLocation(), Other->GetActorLocation(), FColor::Cyan, false, 0.1f, 0, 10);
+				DesiredCohesion.X += Other->GetActorLocation().X;
+				DesiredCohesion.Y += Other->GetActorLocation().Y;
 				Counter++;
 			}
 		}
@@ -137,19 +127,36 @@ FVector AFlockingBaseActor::Cohere(TArray<AFlockingBaseActor*> Entities)
 	
 	if (Counter > 0)
 	{
-		const FVector NewDirection = DesiredCohesion / Counter;
+		const FVector NewDirection = FVector(DesiredCohesion.X / Counter, DesiredCohesion.Y / Counter, GetActorLocation().Z);
 		return NewDirection;
 	}
 	return FVector::ZeroVector;
 }
 
+FVector AFlockingBaseActor::UpdateSeparation(TArray<AFlockingBaseActor*>& Entities) const
+{
+	FVector DesiredCohesion = FVector::ZeroVector;
+	int32 Counter = 0;
+
+	for (AFlockingBaseActor* Other : Entities)
+	{
+		if (FlockingData.ID != Other->FlockingData.ID)
+		{
+			if ((Other->GetActorLocation() - GetActorLocation()).Length() > FlockingData.MinDesiredDistanceToNeighbours * 2)
+			{
+				// https://github.com/jyanar/Boids/blob/master/src/Boid.cpp
+				// https://github.com/nature-of-code/noc-examples-processing/blob/master/chp06_agents/NOC_6_08_SeparationAndSeek/Vehicle.pde
+			}
+		}
+	}
+}
 
 
 void AFlockingBaseActor::OnDebug() const
 {
 	DrawDebugSphere(GetWorld(), CurrentTargetLocation, 30.f, 30, FColor::Black, false,0.2f);
-	DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingData.DesiredDistanceToNeighbours, 30, FColor::Red, false, 0.2f);
-	
+	DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingData.MaxDesiredDistanceToNeighbours, 30, FColor::Red, false, 0.2f);
+	DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingData.MinDesiredDistanceToNeighbours, 30, FColor::Green, false, 0.2f);
 
 }
 

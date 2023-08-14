@@ -104,7 +104,7 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 	}
 }
 
-void AFlockingBrain::SpawnEntity(const FVector SpawnLocation, int32 ID)
+void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int32 ID)
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -112,6 +112,7 @@ void AFlockingBrain::SpawnEntity(const FVector SpawnLocation, int32 ID)
 	NewFlockingEntity->FlockingData.ID = ID;
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("ID: %i"), NewFlockingEntity->FlockingData.ID));
 	Entities.Add(NewFlockingEntity);
+	// TODO: pointer to collection of entities ?
 }
 
 bool AFlockingBrain::CheckCollisionAtSpawnLocation(const FVector NewLocation)
@@ -125,8 +126,10 @@ void AFlockingBrain::ApplyBehaviors()
 {
 	for (AFlockingBaseActor* Entity : Entities)
 	{
-		FVector CohesionForce = Entity->Cohere(Entities);
-		Entity->ApplyForce(CohesionForce);
+		//FVector CohesionForce = Entity->Cohere(Entities);
+		//Entity->ApplyForce(CohesionForce);
+		// TODO: call on seek, and flock methods for each boid
+		Entity->UpdateFlocking(Entities, SeekWeight, CohesionWeight, AlignmentWeight, SeparationWeight);
 	}
 }
 

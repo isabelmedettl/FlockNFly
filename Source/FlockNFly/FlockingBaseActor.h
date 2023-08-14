@@ -18,6 +18,7 @@ struct FFlockingActorData
 	FFlockingActorData()
 	{
 		Velocity = FVector::ZeroVector;
+		Acceleration = FVector::ZeroVector;
 		TargetSpeed = 100.f;
 		CurrentSpeed = TargetSpeed;
 		Direction = FVector::ZeroVector;
@@ -25,12 +26,18 @@ struct FFlockingActorData
 		DistanceToTarget = 0.f;
 		bIsClosestToTarget = false;
 		Size = 0.f;
+		MaxDesiredDistanceToNeighbours = 300.f;
+		MinDesiredDistanceToNeighbours = 150.f;
 		ID = 0;
 	}
 
 	/** Current velocity of entity*/
 	UPROPERTY(VisibleAnywhere, Category = "Flocking")
 	FVector Velocity;
+
+	/** Current acceleration of entity*/
+	UPROPERTY(VisibleAnywhere, Category = "Flocking")
+	FVector Acceleration;
 
 	/** Current speed of boid*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
@@ -60,9 +67,13 @@ struct FFlockingActorData
 	UPROPERTY(VisibleAnywhere, Category="Boid")
 	double Size;
 
-	/** Set radius to other entites that are considered neighbours to entity*/
+	/** Set max radius to other entites that are considered neighbours to entity*/
 	UPROPERTY(EditAnywhere, Category="Flocking")
-	float DesiredDistanceToNeighbours = 0.f;
+	float MaxDesiredDistanceToNeighbours = 0.f;
+
+	/** Set min radius to other entites that are considered neighbours to entity*/
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	float MinDesiredDistanceToNeighbours = 0.f;
 
 	/** Unique number for idintification*/
 	UPROPERTY(VisibleAnywhere, Category="Flocking")
@@ -103,15 +114,15 @@ public:
 	/** Static mesh comp*/
 	UPROPERTY(EditAnywhere, Category="Collision")
 	USphereComponent* CollisionComponent;
+			
+	/** Applies three rules of flocking, modifying volocity accordingly and updates data*/
+	void UpdateFlocking(TArray<AFlockingBaseActor*> &Entities, double SeekWeight, double CohesionWeight, double AlignmentWeight, double SeparationWeight);
+
+protected:
 
 	/** Moves character towards specified current target location*/
-	FVector Seek(float DeltaTime);
+	void Seek(float DeltaTime);
 
-	/** Alters entities position to correspond with average alignment of nearby entities, taking the position of entities within certain radius and steers entity towards the average position of those entites*/
-	FVector Cohere(TArray<AFlockingBaseActor*> Entities);
-
-	/** Applies said force to movement vector*/
-	void ApplyForce(FVector Force);
 
 private:
 
@@ -133,6 +144,43 @@ private:
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
 	double DrawDebugDelay = 2.f;
 
+	/** Alters entities position to correspond with average alignment of nearby entities, taking the position of entities within certain radius and steers entity towards the average position of those entites*/
+	FVector UpdateCohesion(TArray<AFlockingBaseActor*> &Entities) const;
+
+	/** Alters entities to steer away from any neighbor that is within view and within a prescribed minimum separation distance*/
+	FVector UpdateSeparation(TArray<AFlockingBaseActor*> &Entities) const;
+
+	/** Applies said force to movement vector*/
+	void ApplyForce(FVector Force);
+
+	/** Defines how much to slow down to make less abrupt stop*/
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	double SmoothSpeed = 0.5f;
+
+
+	// =========== Flocking rules vectors ============ //
+	/** Separation vector*/ 
+	FVector Separation = FVector::ZeroVector;
+	
+	/** Cohesion vector*/
+	FVector Cohesion = FVector::ZeroVector;
+
+	/** Alignment vector */
+	FVector Alignment = FVector::ZeroVector;
+
+
+	// ============= Collision and 3D navigation =========== //
+	// http://www.red3d.com/cwr/steer/gdc99/
+	// https://github.com/darbycostello/Nav3D
+
+
+	// https://github.com/FAUSheppy/DonAINavigation/blob/master/Source/DonAINavigation/Private/BehaviorTree/BTTask_FlyTo.cpp
+
+	// https://www.youtube.com/watch?v=-oG_8z7b6eM
+
+	// pathfinding
+	// https://www.youtube.com/watch?v=GdhnLIvDQj4
+	//https://www.youtube.com/watch?v=p3WcsO6pAmU
 	
 };
 
