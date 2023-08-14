@@ -3,7 +3,6 @@
 
 #include "FlockingBrain.h"
 
-#include "BoidCharacter.h"
 #include "FlockingBaseActor.h"
 #include "FlockNFlyCharacter.h"
 #include "Kismet/GameplayStatics.h"
@@ -37,6 +36,9 @@ void AFlockingBrain::BeginPlay()
 			SpawnBoids();
 		}
 	}
+
+	// Start looping timer to update flocking entities behavior
+	GetWorldTimerManager().SetTimer(ApplyBehaviorTimerHandle, this, &AFlockingBrain::ApplyBehaviors, ApplyBehaviorDelay, true,0.1f);
 }
 
 // Called every frame
@@ -53,11 +55,12 @@ void AFlockingBrain::SpawnBoids()
 	{
 		CalculatePossibleSpawnFormation();
 		
+		int32 Counter = 0;
 		for (FVector Loc : SpawnLocations)
 		{
-			SpawnEntity(Loc);
+			SpawnEntity(Loc, Counter);
+			Counter++;
 		}
-		
 	}	
 }
 
@@ -101,38 +104,32 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 	}
 }
 
+void AFlockingBrain::SpawnEntity(const FVector SpawnLocation, int32 ID)
+{
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	AFlockingBaseActor* NewFlockingEntity = GetWorld()->SpawnActor<AFlockingBaseActor>(FlockingBaseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+	NewFlockingEntity->FlockingData.ID = ID;
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("ID: %i"), NewFlockingEntity->FlockingData.ID));
+	Entities.Add(NewFlockingEntity);
+}
+
 bool AFlockingBrain::CheckCollisionAtSpawnLocation(const FVector NewLocation)
 {
 	return true;
 }
 
-void AFlockingBrain::SpawnEntity(const FVector SpawnLocation)
-{
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	AFlockingBaseActor* NewFlockingEntity = GetWorld()->SpawnActor<AFlockingBaseActor>(FlockingBaseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
-	Entities.Add(NewFlockingEntity);
-}
+
 
 void AFlockingBrain::ApplyBehaviors()
 {
-}
-
-void AFlockingBrain::AdjustForCohesion()
-{
-	for (int i = 0; i < Entities.Num() - 1; i++)
+	for (AFlockingBaseActor* Entity : Entities)
 	{
-		if (FVector::Dist(Entities[i]->GetActorLocation(), Entities[i + 1]->GetActorLocation()))
-		{
-			
-		}
+		FVector CohesionForce = Entity->Cohere(Entities);
+		Entity->ApplyForce(CohesionForce);
 	}
 }
 
-FVector AFlockingBrain::CalculateComputationDirection()
-{
-	return FVector::ZeroVector;
-}
 
 // https://www.youtube.com/watch?v=IoKfQrlQ7rA
 // https://github.com/nature-of-code/noc-examples-processing/blob/master/chp06_agents/NOC_6_08_SeparationAndSeek/Vehicle.pde

@@ -25,6 +25,7 @@ struct FFlockingActorData
 		DistanceToTarget = 0.f;
 		bIsClosestToTarget = false;
 		Size = 0.f;
+		ID = 0;
 	}
 
 	/** Current velocity of entity*/
@@ -60,8 +61,12 @@ struct FFlockingActorData
 	double Size;
 
 	/** Set radius to other entites that are considered neighbours to entity*/
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	float DesiredDistanceToNeighbours = 0.f;
+
+	/** Unique number for idintification*/
 	UPROPERTY(VisibleAnywhere, Category="Flocking")
-	double DesiredDistanceToNeighbours = 0.f;
+	int32 ID;
 	
 };
 
@@ -100,10 +105,13 @@ public:
 	USphereComponent* CollisionComponent;
 
 	/** Moves character towards specified current target location*/
-	FVector CalculateDirectionToTarget(float DeltaTime);
+	FVector Seek(float DeltaTime);
 
-	/** Applies cohesion rules*/
-	FVector Cohere(const TArray<AFlockingBaseActor*> *Entities);
+	/** Alters entities position to correspond with average alignment of nearby entities, taking the position of entities within certain radius and steers entity towards the average position of those entites*/
+	FVector Cohere(TArray<AFlockingBaseActor*> Entities);
+
+	/** Applies said force to movement vector*/
+	void ApplyForce(FVector Force);
 
 private:
 
@@ -127,3 +135,4 @@ private:
 
 	
 };
+

@@ -9,7 +9,6 @@
 class AFlockingBaseActor;
 class AFlockNFlyCharacter;
 class USphereComponent;
-class ABoidCharacter;
 UCLASS()
 class FLOCKNFLY_API AFlockingBrain : public AActor
 {
@@ -36,6 +35,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	/** Array containing pointers to all boids that the actor is managing*/
+	TArray<AFlockingBaseActor*> Entities = TArray<AFlockingBaseActor*>();
+
 private:
 
 	/** Number of boids to spawn*/
@@ -58,9 +60,6 @@ private:
 	UPROPERTY(EditAnywhere, Category="Spawning", meta = (AllowPrivateAccess = true))
 	double SpawnHeight = 0.f;
 
-	/** Array containing pointers to all boids that the actor is managing*/
-	TArray<AFlockingBaseActor*> Entities = TArray<AFlockingBaseActor*>();
-
 	/** Array containing positions in world space to spawn boid to*/
 	TArray<FVector> SpawnLocations = TArray<FVector>();
 
@@ -80,13 +79,17 @@ private:
 	/** Pointer to player Character*/
 	AFlockNFlyCharacter* PlayerCharacter;
 
-	void SpawnEntity(const FVector SpawnLocation);
+	void SpawnEntity(const FVector SpawnLocation, int32 ID);
 
 
 	// ======= Weights and methods for flocking behaviors ========= //
 
 	/** Looping timer handle for applying specified behaviors on entities*/
 	FTimerHandle ApplyBehaviorTimerHandle;
+
+	/** Delay for how often to apply behaviors on entities, deciding how often to apply vector forces*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	double ApplyBehaviorDelay = 0.3f;
 
 	/** Multiplyer for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
@@ -103,12 +106,6 @@ private:
 	/** Loops through collection of entities and applies behaviors */
 	void ApplyBehaviors();
 
-	/** Adjust all flocking entities to uphold cohesion rules*/
-	void AdjustForCohesion();
-
-	/** Alters entities position to correspond with average alignment of nearby entities, taking the position of entities within certain radius and steers entity towards the average position of those entites*/
-	FVector CalculateComputationDirection();
-	
 	
 	// =========== Flocking variables ============= //
 	/** Counter for how many neighbours an entity has that are within set radius of entity*/

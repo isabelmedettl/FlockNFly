@@ -2,8 +2,6 @@
 
 
 #include "FlockingBaseActor.h"
-
-#include "BoidCharacter.h"
 #include "FlockNFlyCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -46,12 +44,7 @@ void AFlockingBaseActor::BeginPlay()
 		GetWorldTimerManager().SetTimer(DebugTimerHandle, this, &AFlockingBaseActor::OnDebug, DrawDebugDelay, true, 0.1f); // Delay default = 2.f;
 	}
 
-	if (FlockingMeshComponent == nullptr)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT(" No mesh comp ")));
 
-	}
-	
 }
 
 // Called every frame
@@ -63,12 +56,18 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 	{
 		CurrentTargetLocation = PlayerCharacter->GetActorLocation() + PlayerCharacter->GetActorForwardVector() * FlockingData.PreferredDistanceToTarget;
 	}
-	
-	SetActorLocation(CalculateDirectionToTarget(DeltaTime));
+
+	SetActorLocation(Seek(DeltaTime));
+}
+
+void AFlockingBaseActor::ApplyForce(FVector Force)
+{
+	FlockingData.Velocity += Force;
 }
 
 
-FVector AFlockingBaseActor::CalculateDirectionToTarget(float DeltaTime)
+
+FVector AFlockingBaseActor::Seek(float DeltaTime)
 {
 	/*
 	BoidData.Velocity = BoidData.CurrentSpeed * DeltaTime;
@@ -116,19 +115,26 @@ FVector AFlockingBaseActor::CalculateDirectionToTarget(float DeltaTime)
 	return NewDirection;
 }
 
-FVector AFlockingBaseActor::Cohere(const TArray<AFlockingBaseActor*> *Entities)
+FVector AFlockingBaseActor::Cohere(TArray<AFlockingBaseActor*> Entities) 
 {
 	FVector DesiredCohesion = FVector::ZeroVector;
 	int32 Counter = 0;
 
-	for (AFlockingBaseActor* Other : *Entities)
+	for (AFlockingBaseActor* Other : Entities)
 	{
-		if (FlockingData.DesiredDistanceToNeighbours > 0.f && FVector::Distance(GetActorLocation(), Other->GetActorLocation()) < FlockingData.DesiredDistanceToNeighbours)
+		if (FlockingData.ID != Other->FlockingData.ID)
 		{
-			DesiredCohesion += Other->GetActorLocation();
-			Counter++;
+			if (FVector::Distance(GetActorLocation(), Other->GetActorLocation()) < FlockingData.DesiredDistanceToNeighbours)
+			{
+				DrawDebugLine(GetWorld(), GetActorLocation(), Other->GetActorLocation(), FColor::Cyan, false, 0.5f, 0, 30);
+				// TODO: göra en compare func, ge alla boids ett nr när de spawnar, jämföra dem
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("HAs Actors nearby")));
+				DesiredCohesion += Other->GetActorLocation();
+				Counter++;
+			}
 		}
 	}
+	
 	if (Counter > 0)
 	{
 		const FVector NewDirection = DesiredCohesion / Counter;
@@ -137,9 +143,14 @@ FVector AFlockingBaseActor::Cohere(const TArray<AFlockingBaseActor*> *Entities)
 	return FVector::ZeroVector;
 }
 
+
+
 void AFlockingBaseActor::OnDebug() const
 {
 	DrawDebugSphere(GetWorld(), CurrentTargetLocation, 30.f, 30, FColor::Black, false,0.2f);
+	DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingData.DesiredDistanceToNeighbours, 30, FColor::Red, false, 0.2f);
+	
+
 }
 
 
