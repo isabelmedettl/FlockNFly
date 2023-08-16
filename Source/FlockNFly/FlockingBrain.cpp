@@ -24,8 +24,6 @@ void AFlockingBrain::BeginPlay()
 	PlayerCharacter = Cast<AFlockNFlyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if( PlayerCharacter != nullptr)
 	{
-		//FlockingBaseActorClass = AFlockingBaseActor::StaticClass();
-		
 		if (SpawnHeight < 0.f)
 		{
 			SpawnHeight = GetActorLocation().Y;
@@ -38,7 +36,7 @@ void AFlockingBrain::BeginPlay()
 	}
 
 	// Start looping timer to update flocking entities behavior
-	GetWorldTimerManager().SetTimer(ApplyBehaviorTimerHandle, this, &AFlockingBrain::ApplyBehaviors, ApplyBehaviorDelay, true,0.1f);
+	//GetWorldTimerManager().SetTimer(ApplyBehaviorTimerHandle, this, &AFlockingBrain::ApplyBehaviors, ApplyBehaviorDelay, true,0.1f);
 }
 
 // Called every frame
@@ -46,6 +44,7 @@ void AFlockingBrain::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	ApplyBehaviors(DeltaTime);
 }
 
 void AFlockingBrain::SpawnBoids()
@@ -110,31 +109,20 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int32 ID)
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	AFlockingBaseActor* NewFlockingEntity = GetWorld()->SpawnActor<AFlockingBaseActor>(FlockingBaseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 	NewFlockingEntity->FlockingData.ID = ID;
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("ID: %i"), NewFlockingEntity->FlockingData.ID));
 	Entities.Add(NewFlockingEntity);
-	// TODO: pointer to collection of entities ?
-}
-
-bool AFlockingBrain::CheckCollisionAtSpawnLocation(const FVector NewLocation)
-{
-	return true;
+	// TODO: pointer to collection of entities ? Fråga Mikael pga känns onödigt och brain bör hantera allt själv men man måste räkna på medelvärdet?? Svårt
 }
 
 
 
-void AFlockingBrain::ApplyBehaviors()
+void AFlockingBrain::ApplyBehaviors(float DeltaTime)
 {
 	for (AFlockingBaseActor* Entity : Entities)
 	{
-		//FVector CohesionForce = Entity->Cohere(Entities);
-		//Entity->ApplyForce(CohesionForce);
-		// TODO: call on seek, and flock methods for each boid
-		Entity->UpdateFlocking(Entities, SeekWeight, CohesionWeight, AlignmentWeight, SeparationWeight);
+		Entity->UpdateFlocking(Entities, DeltaTime, CohesionWeight, AlignmentWeight, SeparationWeight);
+		// TODO: Skicka ref till samlingen av pointers - najs eller bajs? Kanske iterera och samla sammanlagda vectorer och counts, skicka de till alla entiterer istället för att de ska göra jobbet?
+		// TODO: Just nu är det dubbla loopar, borde gå att se till att alla 3 flocking-lagar inte behöver uppdateras hela tiden, redundant att göra alla checkar?
 	}
 }
 
-
-// https://www.youtube.com/watch?v=IoKfQrlQ7rA
-// https://github.com/nature-of-code/noc-examples-processing/blob/master/chp06_agents/NOC_6_08_SeparationAndSeek/Vehicle.pde
-// ide - weight för hur viktigt det är att följa target/ följa flocken
 

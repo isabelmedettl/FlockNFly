@@ -74,7 +74,6 @@ private:
 	 * @param NewLocation location to check for collision
 	 * @return true if collision is found
 	 */
-	bool CheckCollisionAtSpawnLocation(const FVector NewLocation);
 
 	/** Pointer to player Character*/
 	AFlockNFlyCharacter* PlayerCharacter;
@@ -89,11 +88,11 @@ private:
 
 	/** Delay for how often to apply behaviors on entities, deciding how often to apply vector forces*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	double ApplyBehaviorDelay = 0.3f;
+	double ApplyBehaviorDelay = 0.1f;
 
 	/** Multiplyer for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 CohesionWeight = 1.5f;
+	int32 CohesionWeight = 1.2f;
 
 	/** Multiplyer for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
@@ -101,14 +100,14 @@ private:
 	
 	/** Multiplyer for applying separation force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 SeparationWeight = 1.2f;
+	int32 SeparationWeight = 3.f;
 
 	/** Multiplyer for applying alignment force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 AlignmentWeight = 1.f;
+	int32 AlignmentWeight = 1.2f;
 
 	/** Loops through collection of entities and applies behaviors */
-	void ApplyBehaviors();
+	void ApplyBehaviors(float DeltaTime);
 
 	
 	// =========== Flocking variables ============= //
