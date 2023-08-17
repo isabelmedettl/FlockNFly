@@ -43,8 +43,7 @@ void AFlockingBrain::BeginPlay()
 void AFlockingBrain::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	ApplyBehaviors(DeltaTime);
+	ApplyBehaviors();
 }
 
 void AFlockingBrain::SpawnBoids()
@@ -115,11 +114,11 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int32 ID)
 
 
 
-void AFlockingBrain::ApplyBehaviors(float DeltaTime)
+void AFlockingBrain::ApplyBehaviors()
 {
 	for (AFlockingBaseActor* Entity : Entities)
 	{
-		Entity->UpdateFlocking(Entities, DeltaTime, CohesionWeight, AlignmentWeight, SeparationWeight);
+		Entity->UpdateFlocking(Entities, CohesionWeight, AlignmentWeight, SeparationWeight);
 		// TODO: Skicka ref till samlingen av pointers - najs eller bajs? Kanske iterera och samla sammanlagda vectorer och counts, skicka de till alla entiterer istället för att de ska göra jobbet?
 		// TODO: Just nu är det dubbla loopar, borde gå att se till att alla 3 flocking-lagar inte behöver uppdateras hela tiden, redundant att göra alla checkar?
 	}

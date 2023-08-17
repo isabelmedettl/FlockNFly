@@ -100,14 +100,14 @@ private:
 	
 	/** Multiplyer for applying separation force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 SeparationWeight = 3.f;
+	int32 SeparationWeight = 5.f;
 
 	/** Multiplyer for applying alignment force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
 	int32 AlignmentWeight = 1.2f;
 
 	/** Loops through collection of entities and applies behaviors */
-	void ApplyBehaviors(float DeltaTime);
+	void ApplyBehaviors();
 
 	
 	// =========== Flocking variables ============= //

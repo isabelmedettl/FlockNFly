@@ -18,7 +18,9 @@ struct FFlockingActorData
 	FFlockingActorData()
 	{
 		Velocity = FVector::ZeroVector;
-		MaxAcceleration = FVector(100.f, 0.f, 0.f);
+		Acceleration = FVector::ZeroVector;
+		SteerForce = FVector::ZeroVector;
+		Mass = 5.f;
 		TargetSpeed = 100.f;
 		CurrentSpeed = TargetSpeed;
 		Direction = FVector::ZeroVector;
@@ -26,11 +28,9 @@ struct FFlockingActorData
 		DistanceToTarget = 0.f;
 		bIsClosestToTarget = false;
 		Size = 0.f;
-		MaxDesiredDistanceToNeighbours = 300.f;
-		MinDesiredDistanceToNeighbours = 150.f;
 		ID = 0;
 		MaxSpeed = 200.f;
-		MaxForce = 0.5f;
+		MaxForce = 50.f;
 	}
 
 	/** Current velocity of entity*/
@@ -39,7 +39,15 @@ struct FFlockingActorData
 
 	/** Current acceleration of entity*/
 	UPROPERTY(VisibleAnywhere, Category = "Flocking")
-	FVector MaxAcceleration;
+	FVector Acceleration;
+
+	/** Current steering force of entity*/
+	UPROPERTY(VisibleAnywhere, Category = "Flocking")
+	FVector SteerForce;
+
+	/** Mass of entity*/
+	UPROPERTY(EditAnywhere, Category = "Flocking")
+	double Mass;
 
 	/** Current speed of boid*/
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
@@ -69,25 +77,33 @@ struct FFlockingActorData
 	UPROPERTY(VisibleAnywhere, Category="Boid")
 	double Size;
 
-	/** Set max radius to other entites that are considered neighbours to entity*/
+	/** Set radius to other entites that are considered neighbours to entity*/
 	UPROPERTY(EditAnywhere, Category="Flocking")
-	double MaxDesiredDistanceToNeighbours = 0.f;
+	double NeighbourRadius = 0.f;
 
-	/** Set min radius to other entites that are considered neighbours to entity*/
+	/** Distance of field of vision for separation between entities */
 	UPROPERTY(EditAnywhere, Category="Flocking")
-	double MinDesiredDistanceToNeighbours = 0.f;
+	double DesiredSeparationRadius = 200.f;
+
+	/** Maximal distance of vision for calculating average position amongst neighbour entities and moving towards that point */
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	double DesiredCohesionRadius = 700.f;
+
+	/** Distance of field of vision for calculating average velocity of nearby entities*/
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	double DesiredAlignmentRadius = 300.f;
 
 	/** Unique number for idintification*/
 	UPROPERTY(VisibleAnywhere, Category="Flocking")
 	int32 ID;
 
 	/** Limits magnitude of velocity vector */
-	UPROPERTY(VisibleAnywhere, Category="Flocking")
-	double MaxSpeed;
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	double MaxSpeed = 4.f;
 
 	/** Limits magnitude of acceleration vector */
-	UPROPERTY(VisibleAnywhere, Category="Flocking")
-	double MaxForce;
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	double MaxForce = 0.2f;
 	
 };
 
@@ -126,16 +142,19 @@ public:
 	USphereComponent* CollisionComponent;
 			
 	/** Applies three rules of flocking, modifying volocity accordingly and updates data*/
-	void UpdateFlocking(TArray<AFlockingBaseActor*> &Entities, float DeltaTime, double CohesionWeight, double AlignmentWeight, double SeparationWeight);
+	void UpdateFlocking(TArray<AFlockingBaseActor*> &Entities, double CohesionWeight, double AlignmentWeight, double SeparationWeight);
 
 protected:
 
 	/** Moves character towards specified current target location*/
-	void Seek(float DeltaTime);
+	void CalculateSteeringForce();
 
 	
 
 private:
+
+	/** Variable storing delta time*/
+	float DTime;
 
 	/** Pointer toward player character*/
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess = true))
