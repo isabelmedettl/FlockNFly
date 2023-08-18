@@ -68,35 +68,59 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 	{
 		EntityRows = EntityColumns = 0;
 	}
-
-	// Calculate the ideal square shape based on number of boids to spawn
-	const double IdealWidth = UKismetMathLibrary::Sqrt(NumberOfEntities);
-	const double IdealHeight = UKismetMathLibrary::Sqrt(NumberOfEntities);
-
-	// Calculate number of cols and rows based on ideal shape
-	EntityColumns = FMath::CeilToInt32(IdealHeight);
-	EntityRows = FMath::CeilToInt32(IdealHeight);
-
-	// Calculate locations for boids to spawn at in world space, depending on actors placement
-	int32 StartX = -(EntityColumns - 1) / 2;
-	int32 EndX = (EntityColumns + 1) / 2;
-	int32 StartY = -(EntityRows - 1) / 2;
-	int32 EndY = (EntityRows + 1) / 2;
-	
-
-	// Spawn boids in calculated locations
-	int32 Counter = NumberOfEntities;
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	for (int X = StartX; X < EndX; X++)
+	else if(NumberOfEntities == 1)
 	{
-		for (int Y = StartY; Y < EndY; Y++)
+		SpawnLocations.Add(GetActorLocation());
+	}
+	else if(NumberOfEntities == 2)
+	{
+		SpawnLocations.Add(FVector(GetActorLocation().X, GetActorLocation().Y  + DistanceBetweenEntities, GetActorLocation().Z));
+		SpawnLocations.Add(GetActorLocation());
+	}
+	else if(NumberOfEntities == 3)
+	{
+		SpawnLocations.Add(GetActorLocation());
+		SpawnLocations.Add(FVector (GetActorLocation().X + DistanceBetweenEntities * FMath::Cos(60.f), GetActorLocation().Y + DistanceBetweenEntities * FMath::Sin(60.f), GetActorLocation().Z ));
+		SpawnLocations.Add(FVector (GetActorLocation().X + DistanceBetweenEntities * FMath::Cos(-60.f), GetActorLocation().Y + DistanceBetweenEntities * FMath::Sin(-60.f), GetActorLocation().Z ));
+	}
+	else if(NumberOfEntities == 4)
+	{
+		SpawnLocations.Add(FVector(GetActorLocation().X - DistanceBetweenEntities, GetActorLocation().Y - DistanceBetweenEntities,  GetActorLocation().Z ));
+		SpawnLocations.Add(FVector(GetActorLocation().X - DistanceBetweenEntities, GetActorLocation().Y + DistanceBetweenEntities,  GetActorLocation().Z ));
+		SpawnLocations.Add(FVector(GetActorLocation().X + DistanceBetweenEntities, GetActorLocation().Y + DistanceBetweenEntities,  GetActorLocation().Z ));
+		SpawnLocations.Add(FVector(GetActorLocation().X + DistanceBetweenEntities, GetActorLocation().Y - DistanceBetweenEntities,  GetActorLocation().Z ));
+	}
+	else
+	{
+		
+		// Calculate the ideal square shape based on number of boids to spawn
+		const double IdealWidth = UKismetMathLibrary::Sqrt(NumberOfEntities);
+		const double IdealHeight = UKismetMathLibrary::Sqrt(NumberOfEntities);
+
+		// Calculate number of cols and rows based on ideal shape
+		EntityColumns = FMath::CeilToInt32(IdealHeight);
+		EntityRows = FMath::CeilToInt32(IdealHeight);
+		
+		// Calculate locations for boids to spawn at in world space, depending on actors placement
+		int32 StartX = -(EntityColumns - 1) / 2;
+		int32 EndX = (EntityColumns + 1) / 2;
+		int32 StartY = -(EntityRows - 1) / 2;
+		int32 EndY = (EntityRows + 1) / 2;
+	
+		// Spawn boids in calculated locations
+		int32 Counter = NumberOfEntities;
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		for (int X = StartX; X < EndX; X++)
 		{
-			if (Counter > 0)
+			for (int Y = StartY; Y < EndY; Y++)
 			{
-				FVector SpawnLocation = GetActorLocation() + FVector(X * DistanceBetweenEntities, Y * DistanceBetweenEntities, SpawnHeight);
-				SpawnLocations.Add(SpawnLocation);
-				Counter--;
+				if (Counter > 0)
+				{
+					FVector SpawnLocation = GetActorLocation() + FVector(X * DistanceBetweenEntities, Y * DistanceBetweenEntities, SpawnHeight);
+					SpawnLocations.Add(SpawnLocation);
+					Counter--;
+				}
 			}
 		}
 	}
@@ -118,7 +142,7 @@ void AFlockingBrain::ApplyBehaviors()
 {
 	for (AFlockingBaseActor* Entity : Entities)
 	{
-		Entity->UpdateFlocking(Entities, CohesionWeight, AlignmentWeight, SeparationWeight);
+		Entity->UpdateFlocking(Entities, SeekWeight, CohesionWeight, AlignmentWeight, SeparationWeight);
 		// TODO: Skicka ref till samlingen av pointers - najs eller bajs? Kanske iterera och samla sammanlagda vectorer och counts, skicka de till alla entiterer istället för att de ska göra jobbet?
 		// TODO: Just nu är det dubbla loopar, borde gå att se till att alla 3 flocking-lagar inte behöver uppdateras hela tiden, redundant att göra alla checkar?
 	}

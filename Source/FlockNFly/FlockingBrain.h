@@ -100,7 +100,7 @@ private:
 	
 	/** Multiplyer for applying separation force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 SeparationWeight = 5.f;
+	int32 SeparationWeight = 3.f;
 
 	/** Multiplyer for applying alignment force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))

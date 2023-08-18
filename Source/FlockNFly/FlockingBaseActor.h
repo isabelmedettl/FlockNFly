@@ -28,6 +28,9 @@ struct FFlockingActorData
 		DistanceToTarget = 0.f;
 		bIsClosestToTarget = false;
 		Size = 0.f;
+		DesiredSeparationRadius = 200.f;
+		DesiredCohesionRadius = 300.f;
+		DesiredAlignmentRadius = 400.f;
 		ID = 0;
 		MaxSpeed = 200.f;
 		MaxForce = 50.f;
@@ -87,7 +90,7 @@ struct FFlockingActorData
 
 	/** Maximal distance of vision for calculating average position amongst neighbour entities and moving towards that point */
 	UPROPERTY(EditAnywhere, Category="Flocking")
-	double DesiredCohesionRadius = 700.f;
+	double DesiredCohesionRadius = 300.f;
 
 	/** Distance of field of vision for calculating average velocity of nearby entities*/
 	UPROPERTY(EditAnywhere, Category="Flocking")
@@ -142,14 +145,8 @@ public:
 	USphereComponent* CollisionComponent;
 			
 	/** Applies three rules of flocking, modifying volocity accordingly and updates data*/
-	void UpdateFlocking(TArray<AFlockingBaseActor*> &Entities, double CohesionWeight, double AlignmentWeight, double SeparationWeight);
+	void UpdateFlocking(TArray<AFlockingBaseActor*> &Entities, double SeekWeight, double CohesionWeight, double AlignmentWeight, double SeparationWeight);
 
-protected:
-
-	/** Moves character towards specified current target location*/
-	void CalculateSteeringForce();
-
-	
 
 private:
 
@@ -175,12 +172,7 @@ private:
 
 	/** Defines how often to draw debug shapes*/
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
-	double DrawDebugDelay = 2.f;
-
-	/** Pointer to neighbour in flock, used for debugging */
-	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess = true))
-	AFlockingBaseActor* OtherNeighbour;
-	
+	double DrawDebugDelay = 2.f;	
 
 	// =========== Flocking rules vectors ============ //
 	/** Separation vector*/ 
@@ -193,23 +185,21 @@ private:
 	FVector Alignment = FVector::ZeroVector;
 
 	/** Alters entities position to correspond with average alignment of nearby entities, taking the position of entities within certain radius and steers entity towards the average position of those entites*/
-	FVector UpdateCohesion(TArray<AFlockingBaseActor*> &Entities);
+	FVector CalculateCohesionForce(TArray<AFlockingBaseActor*> &Entities);
 
 	/** Alters entities to steer away from any neighbor that is within view and within a prescribed minimum separation distance*/
-	FVector UpdateSeparation(TArray<AFlockingBaseActor*> &Entities);
+	FVector CalculateSeparationForce(TArray<AFlockingBaseActor*> &Entities);
 
 	/** Attempts to match the velocity of other entities inside this entity´s visible range by adding neighbours velocity to computation vector*/
-	FVector UpdateAlignment(TArray<AFlockingBaseActor*> &Entities);
+	FVector CalculateAlignmentForce(TArray<AFlockingBaseActor*> &Entities);
 
-	/** Applies said force to movement vector*/
-	void ApplyForce(FVector Force);
+	/** Moves character towards specified current target location*/
+	void CalculateSteeringForce();
 
 	/** Defines how much to slow down to make less abrupt stop*/
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
 	double SmoothSpeed = 0.5f;
 
-	/** Limits force that can be applies to velocity*/
-	FVector LimitForce(FVector& CurrentForce);
 
 	// ============= Collision and 3D navigation =========== //
 	// http://www.red3d.com/cwr/steer/gdc99/

@@ -10,7 +10,8 @@
   <component name="ChangeListManager">
     <list default="true" id="7ffacc66-12e9-4a4a-8106-f84752647aa7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBaseActor.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBaseActor.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBrain.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBrain.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/2/MA/NY1Y42AFC81AOHEQV9T17C.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/2/MA/NY1Y42AFC81AOHEQV9T17C.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.cpp" afterDir="false" />
@@ -197,6 +198,8 @@
       <workItem from="1692168019344" duration="22352000" />
       <workItem from="1692256098504" duration="8742000" />
       <workItem from="1692275857505" duration="6911000" />
+      <workItem from="1692344753453" duration="12366000" />
+      <workItem from="1692358340153" duration="1646000" />
     </task>
     <servers />
   </component>
