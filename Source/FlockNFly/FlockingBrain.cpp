@@ -56,6 +56,8 @@ void AFlockingBrain::SpawnBoids()
 		int32 Counter = 0;
 		for (FVector Loc : SpawnLocations)
 		{
+			DrawDebugSphere(GetWorld(), Loc , 30.f, 30, FColor::Black, true,0.2f);
+
 			SpawnEntity(Loc, Counter);
 			Counter++;
 		}
@@ -131,21 +133,96 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int32 ID)
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	AFlockingBaseActor* NewFlockingEntity = GetWorld()->SpawnActor<AFlockingBaseActor>(FlockingBaseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
-	NewFlockingEntity->FlockingData.ID = ID;
+	FFlockingActorData NewEntityDataRef;
+	const int32 EntityDataIndex = EntitiesFlockingData.Emplace(NewEntityDataRef);
 	Entities.Add(NewFlockingEntity);
-	// TODO: pointer to collection of entities ? Fråga Mikael pga känns onödigt och brain bör hantera allt själv men man måste räkna på medelvärdet?? Svårt
+	
+	NewFlockingEntity->SetFlockingDataPointer(&NewEntityDataRef);
+	
+	
+	NewEntityDataRef.DesiredSeparationRadius = DesiredSeparationRadius;
+	NewEntityDataRef.DesiredCohesionRadius = DesiredCohesionRadius;
+	NewEntityDataRef.DesiredAlignmentRadius = DesiredAlignmentRadius;
+	NewEntityDataRef.ID = EntityDataIndex;
 }
 
+
+namespace EntityFuncs 
+{
+	FVector CalculateSeparationForce(int Counter, FVector &Separation) // pekare till funktioner?? 
+	{
+		if (Counter > 0)
+		{
+			Separation /= Counter;
+			Separation *= -1;
+			Separation.Normalize();
+			return Separation;
+		}
+		return FVector::ZeroVector;
+	}
+}
 
 
 void AFlockingBrain::ApplyBehaviors()
 {
-	for (AFlockingBaseActor* Entity : Entities)
+	int SepCounter = 0;
+	int CohCounter = 0;
+	int AlignCounter = 0;
+
+	FVector TotalSeparationForce = FVector::ZeroVector;
+
+	
+	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
-		Entity->UpdateFlocking(Entities, SeekWeight, CohesionWeight, AlignmentWeight, SeparationWeight);
-		// TODO: Skicka ref till samlingen av pointers - najs eller bajs? Kanske iterera och samla sammanlagda vectorer och counts, skicka de till alla entiterer istället för att de ska göra jobbet?
-		// TODO: Just nu är det dubbla loopar, borde gå att se till att alla 3 flocking-lagar inte behöver uppdateras hela tiden, redundant att göra alla checkar?
+		Entities[i]->UpdateSteerForce(EntitiesFlockingData);
 	}
+
+	
+	/*
+	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
+	{
+		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation);
+		for (int j = 0; j < EntitiesFlockingData.Num(); j++)
+		{
+			if (EntitiesFlockingData[i]->ID != EntitiesFlockingData[j]->ID)
+			{
+				float Distance = (EntitiesFlockingData[i]->Location - EntitiesFlockingData[j]->Location).Length();
+				if (Distance < DesiredSeparationRadius * 2) 
+				{
+					TotalSeparationForce += (EntitiesFlockingData[i]->Location - EntitiesFlockingData[j]->Location );
+					SepCounter++;
+				}
+			}
+		}
+		Separation = EntityFuncs::CalculateSeparationForce(SepCounter, TotalSeparationForce);
+		Separation *= SeparationWeight;
+		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation);
+		//EntitiesFlockingData[i].SteerForce += Separation * 300.f;
+		
+
+	}
+
+	
+	*/
+	
+	
+	//EntitiesFlockingData[i].SteerForce += TotalSeparationForce;
+	
+	
+
+	
+	
+	/*
+	for (AFlockingBaseActor* Entity : Entities) // iterera alla structar
+	{
+		
+		Entity->UpdateSteerForce(Entities, SeekWeight, CohesionWeight, AlignmentWeight, SeparationWeight);
+
+		// beräkna steerforce för varje entitet
+		EntityFuncs::CalculateVelocity();
+	}
+	*/
 }
+
 
 

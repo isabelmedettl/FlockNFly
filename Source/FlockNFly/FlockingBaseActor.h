@@ -8,108 +8,8 @@
 
 class USphereComponent;
 class AFlockNFlyCharacter;
-
-/**  Struct containing boid data*/
-USTRUCT()
-struct FFlockingActorData
-{
-	GENERATED_BODY()
-	
-	FFlockingActorData()
-	{
-		Velocity = FVector::ZeroVector;
-		Acceleration = FVector::ZeroVector;
-		SteerForce = FVector::ZeroVector;
-		Mass = 5.f;
-		TargetSpeed = 100.f;
-		CurrentSpeed = TargetSpeed;
-		Direction = FVector::ZeroVector;
-		PreferredDistanceToTarget = 200.f;
-		DistanceToTarget = 0.f;
-		bIsClosestToTarget = false;
-		Size = 0.f;
-		DesiredSeparationRadius = 200.f;
-		DesiredCohesionRadius = 300.f;
-		DesiredAlignmentRadius = 400.f;
-		ID = 0;
-		MaxSpeed = 200.f;
-		MaxForce = 50.f;
-	}
-
-	/** Current velocity of entity*/
-	UPROPERTY(VisibleAnywhere, Category = "Flocking")
-	FVector Velocity;
-
-	/** Current acceleration of entity*/
-	UPROPERTY(VisibleAnywhere, Category = "Flocking")
-	FVector Acceleration;
-
-	/** Current steering force of entity*/
-	UPROPERTY(VisibleAnywhere, Category = "Flocking")
-	FVector SteerForce;
-
-	/** Mass of entity*/
-	UPROPERTY(EditAnywhere, Category = "Flocking")
-	double Mass;
-
-	/** Current speed of boid*/
-	UPROPERTY(VisibleAnywhere, Category = "Movement")
-	double CurrentSpeed = 100.f;
-
-	/** Target speed of boid to lerp toward*/
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	double TargetSpeed = 100.f;
-
-	/** Current direction in which entity is moving in i world space*/
-	UPROPERTY(VisibleAnywhere, Category = "Flocking")
-	FVector Direction;
-
-	/** Distance to keep from other entities*/
-	UPROPERTY(EditAnywhere, Category = "Flocking")
-	double PreferredDistanceToTarget = 50.f;
-
-	/** Distance to current target*/
-	UPROPERTY(VisibleAnywhere, Category = "Flocking")
-	double DistanceToTarget = 0.f;
-
-	/** True if is closest to target*/
-	UPROPERTY(EditAnywhere, Category = "Flocking")
-	bool bIsClosestToTarget;
-
-	/** Size of boid*/
-	UPROPERTY(VisibleAnywhere, Category="Boid")
-	double Size;
-
-	/** Set radius to other entites that are considered neighbours to entity*/
-	UPROPERTY(EditAnywhere, Category="Flocking")
-	double NeighbourRadius = 0.f;
-
-	/** Distance of field of vision for separation between entities */
-	UPROPERTY(EditAnywhere, Category="Flocking")
-	double DesiredSeparationRadius = 200.f;
-
-	/** Maximal distance of vision for calculating average position amongst neighbour entities and moving towards that point */
-	UPROPERTY(EditAnywhere, Category="Flocking")
-	double DesiredCohesionRadius = 300.f;
-
-	/** Distance of field of vision for calculating average velocity of nearby entities*/
-	UPROPERTY(EditAnywhere, Category="Flocking")
-	double DesiredAlignmentRadius = 300.f;
-
-	/** Unique number for idintification*/
-	UPROPERTY(VisibleAnywhere, Category="Flocking")
-	int32 ID;
-
-	/** Limits magnitude of velocity vector */
-	UPROPERTY(EditAnywhere, Category="Flocking")
-	double MaxSpeed = 4.f;
-
-	/** Limits magnitude of acceleration vector */
-	UPROPERTY(EditAnywhere, Category="Flocking")
-	double MaxForce = 0.2f;
-	
-};
-
+struct FFlockingActorData;
+class AFlockingBrain;
 
 UCLASS()
 class FLOCKNFLY_API AFlockingBaseActor : public AActor
@@ -132,10 +32,6 @@ public:
 	UPROPERTY(EditAnywhere, Category= "Debug")
 	bool bDebug = false;
 
-	/** Struct containing data for flocking behavior*/
-	UPROPERTY(EditAnywhere, Category= "Flocking")
-	FFlockingActorData FlockingData;
-
 	/** Static mesh comp*/
 	UPROPERTY(EditAnywhere, Category="Mesh")
 	UStaticMeshComponent* FlockingMeshComponent;
@@ -145,14 +41,32 @@ public:
 	USphereComponent* CollisionComponent;
 			
 	/** Applies three rules of flocking, modifying volocity accordingly and updates data*/
-	void UpdateFlocking(TArray<AFlockingBaseActor*> &Entities, double SeekWeight, double CohesionWeight, double AlignmentWeight, double SeparationWeight);
+	void UpdateSteerForce(TArray<FFlockingActorData> EntitiesFlockingData);
+
+	void SetFlockingDataPointer(FFlockingActorData* Pointer);
+	
 
 
 private:
 
-	/** Variable storing delta time*/
-	float DTime;
+	/** Struct containing data for flocking behavior*/
+	FFlockingActorData* FlockingActorData; 
+	
+	/** Limits magnitude of velocity vector */
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	float MaxSpeed = 400.f;
 
+	/** Limits magnitude of acceleration vector */
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	float MaxForce = 50.f;
+
+	/** Mass of entity*/
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	float Mass = 0.7f;
+
+	/** Distance to keep from other entities*/
+	float PreferredDistanceToTarget = 50.f;
+	
 	/** Pointer toward player character*/
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess = true))
 	AFlockNFlyCharacter* PlayerCharacter;
@@ -172,7 +86,7 @@ private:
 
 	/** Defines how often to draw debug shapes*/
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
-	double DrawDebugDelay = 2.f;	
+	float DrawDebugDelay = 2.f;	
 
 	// =========== Flocking rules vectors ============ //
 	/** Separation vector*/ 
@@ -193,12 +107,10 @@ private:
 	/** Attempts to match the velocity of other entities inside this entity´s visible range by adding neighbours velocity to computation vector*/
 	FVector CalculateAlignmentForce(TArray<AFlockingBaseActor*> &Entities);
 
-	/** Moves character towards specified current target location*/
-	void CalculateSteeringForce();
+	/** Take the vector resulting from subtracting the desired position from the current position. The result is the appropriate velocity */
+	FVector CalculateSeekForce();
 
-	/** Defines how much to slow down to make less abrupt stop*/
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
-	double SmoothSpeed = 0.5f;
+	/** */
 
 
 	// ============= Collision and 3D navigation =========== //

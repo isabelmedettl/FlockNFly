@@ -10,7 +10,6 @@
   <component name="ChangeListManager">
     <list default="true" id="7ffacc66-12e9-4a4a-8106-f84752647aa7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBrain.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBrain.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/2/MA/NY1Y42AFC81AOHEQV9T17C.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/2/MA/NY1Y42AFC81AOHEQV9T17C.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.h" afterDir="false" />
@@ -30,27 +29,27 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.68065965&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;CppUnrealEngineOptionsId&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "XThreadsFramesViewSplitterKey": "0.38336933",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "settings.editor.selected.configurable": "CppUnrealEngineOptionsId",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;rider.external.source.directories&quot;: [
-      &quot;C:\\Users\\isabe\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\DecompilerCache&quot;,
-      &quot;C:\\Users\\isabe\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\SourcesCache&quot;,
-      &quot;C:\\Users\\isabe\\AppData\\Local\\Symbols\\src&quot;
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "C:\\Users\\isabe\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\DecompilerCache",
+      "C:\\Users\\isabe\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\SourcesCache",
+      "C:\\Users\\isabe\\AppData\\Local\\Symbols\\src"
     ]
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="C++ Project.FlockNFly">
     <configuration name="FlockNFly" type="CppProject" factoryName="C++ Project">
       <configuration_1>
@@ -200,6 +199,12 @@
       <workItem from="1692275857505" duration="6911000" />
       <workItem from="1692344753453" duration="12366000" />
       <workItem from="1692358340153" duration="1646000" />
+      <workItem from="1692380031786" duration="3171000" />
+      <workItem from="1692383974723" duration="6000" />
+      <workItem from="1692559716449" duration="4892000" />
+      <workItem from="1692600623026" duration="16886000" />
+      <workItem from="1692618623132" duration="1955000" />
+      <workItem from="1692642969214" duration="5465000" />
     </task>
     <servers />
   </component>

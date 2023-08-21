@@ -3,12 +3,66 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FlockingBaseActor.h"
 #include "GameFramework/Actor.h"
 #include "FlockingBrain.generated.h"
 
 class AFlockingBaseActor;
 class AFlockNFlyCharacter;
 class USphereComponent;
+
+USTRUCT()
+struct FFlockingActorData // ta bort all skit, doubles är onödigt, använd floats pga kostsamhet och inte prec. Gör om så det inte är properties, utan setts från brain
+	{
+	GENERATED_BODY()
+
+	/*
+	FFlockingActorData()
+	{
+		Velocity = FVector::ZeroVector;
+		Acceleration = FVector::ZeroVector;
+		SteerForce = FVector::ZeroVector;
+		Location = FVector::ZeroVector;
+		DesiredSeparationRadius = 200.f;
+		DesiredCohesionRadius = 300.f;
+		DesiredAlignmentRadius = 400.f;
+		ID = 0; // bort
+	}
+	*/
+
+	/** Current velocity of entity*/
+	UPROPERTY(VisibleAnywhere, Category = "Flocking")
+	FVector Velocity;
+
+	/** Current acceleration of entity*/
+	UPROPERTY(VisibleAnywhere, Category = "Flocking")
+	FVector Acceleration;
+
+	/** Current steering force of entity*/
+	UPROPERTY(VisibleAnywhere, Category = "Flocking")
+	FVector SteerForce;
+
+	/** Current location of entity in world space */
+	UPROPERTY(VisibleAnywhere, Category = "Flocking")
+	FVector Location;
+	
+	/** Distance of field of vision for separation between entities */
+	float DesiredSeparationRadius = 200.f;
+
+	/** Maximal distance of vision for calculating average position amongst neighbour entities and moving towards that point */
+	UPROPERTY()
+	float DesiredCohesionRadius = 300.f;
+
+	/** Distance of field of vision for calculating average velocity of nearby entities*/
+	UPROPERTY()
+	float DesiredAlignmentRadius = 300.f;
+
+	/** Unique number for idintification*/
+	UPROPERTY(VisibleAnywhere, Category="Flocking")
+	int32 ID; // TA bort
+
+};
+
 UCLASS()
 class FLOCKNFLY_API AFlockingBrain : public AActor
 {
@@ -35,11 +89,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	/** Array containing pointers to all boids that the actor is managing*/
-	TArray<AFlockingBaseActor*> Entities = TArray<AFlockingBaseActor*>();
-
 private:
 
+	/** Array containing pointers to all entities that the actor is managing*/
+	TArray<AFlockingBaseActor*> Entities = TArray<AFlockingBaseActor*>();
+
+	/** Array containing Flocking data structs to all active entities, mapped to Entities*/
+	TArray<FFlockingActorData> EntitiesFlockingData = TArray<FFlockingActorData>();
+	
 	/** Number of boids to spawn*/
 	UPROPERTY(EditAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
 	int32 NumberOfEntities = 0;
@@ -111,8 +168,28 @@ private:
 
 	
 	// =========== Flocking variables ============= //
-	/** Counter for how many neighbours an entity has that are within set radius of entity*/
-	int32 CloseEntityCount = 0;
+	/** Distance of field of vision for separation between entities */
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	float DesiredSeparationRadius = 200.f;
+
+	/** Maximal distance of vision for calculating average position amongst neighbour entities and moving towards that point */
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	float DesiredCohesionRadius = 300.f;
+
+	/** Distance of field of vision for calculating average velocity of nearby entities*/
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	float DesiredAlignmentRadius = 300.f;
+
+	// =========== Flocking force vectors to apply to entities ============ //
+	
+	/** Separation vector*/ 
+	FVector Separation = FVector::ZeroVector;
+	
+	/** Cohesion vector*/
+	FVector Cohesion = FVector::ZeroVector;
+
+	/** Alignment vector */
+	FVector Alignment = FVector::ZeroVector;
 
 	
 	
