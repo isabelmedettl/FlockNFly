@@ -56,8 +56,6 @@ void AFlockingBrain::SpawnBoids()
 		int32 Counter = 0;
 		for (FVector Loc : SpawnLocations)
 		{
-			DrawDebugSphere(GetWorld(), Loc , 30.f, 30, FColor::Black, true,0.2f);
-
 			SpawnEntity(Loc, Counter);
 			Counter++;
 		}
@@ -111,8 +109,6 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 	
 		// Spawn boids in calculated locations
 		int32 Counter = NumberOfEntities;
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		for (int X = StartX; X < EndX; X++)
 		{
 			for (int Y = StartY; Y < EndY; Y++)
@@ -132,20 +128,47 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int32 ID)
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	AFlockingBaseActor* NewFlockingEntity = GetWorld()->SpawnActor<AFlockingBaseActor>(FlockingBaseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
-	FFlockingActorData NewEntityDataRef;
-	const int32 EntityDataIndex = EntitiesFlockingData.Emplace(NewEntityDataRef);
-	Entities.Add(NewFlockingEntity);
-	
-	NewFlockingEntity->SetFlockingDataPointer(&NewEntityDataRef);
-	
-	
-	NewEntityDataRef.DesiredSeparationRadius = DesiredSeparationRadius;
-	NewEntityDataRef.DesiredCohesionRadius = DesiredCohesionRadius;
-	NewEntityDataRef.DesiredAlignmentRadius = DesiredAlignmentRadius;
-	NewEntityDataRef.ID = EntityDataIndex;
-}
 
+	
+	
+	AFlockingBaseActor* NewFlockingEntity = GetWorld()->SpawnActor<AFlockingBaseActor>(FlockingBaseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+	//DrawDebugSphere(GetWorld(), NewFlockingEntity->GetActorLocation(), 80.f, 30, FColor::Blue, true,10.f);
+
+	
+	FFlockingActorData NewEntityData;
+	
+	NewEntityData.DesiredSeparationRadius = DesiredSeparationRadius;
+	NewEntityData.DesiredCohesionRadius = DesiredCohesionRadius;
+	NewEntityData.DesiredAlignmentRadius = DesiredAlignmentRadius;
+	NewEntityData.Location = SpawnLocation;
+
+	
+	
+	
+
+	const int32 EntityDataIndex = EntitiesFlockingData.Add(NewEntityData);
+	NewEntityData.ID = EntityDataIndex;
+	NewFlockingEntity->SetFlockingDataPointer(&EntitiesFlockingData[EntityDataIndex]);
+	//NewFlockingEntity->SetFlockingDataProperties()
+	
+	//DrawDebugSphere(GetWorld(), NewFlockingEntity->FlockingActorData->Location, 80.f, 30, FColor::Black, true,10.f);
+	DrawDebugSphere(GetWorld(), NewEntityData.Location, 80.f, 30, FColor::Red, true,10.f);
+	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Loc Data in brain %f, %f, %f, ID = %i "), NewEntityData.Location.X, NewEntityData.Location.Y, NewEntityData.Location.Z, NewEntityData.ID));
+	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Desired Sep Data set in brain: %f ID: %i"), NewEntityData.DesiredSeparationRadius, NewEntityData.ID));
+
+
+
+
+	/*
+
+	
+	Entities.Add(NewFlockingEntity);
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity index %i "), index));
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity data index %i "), EntityDataIndex));
+	*/
+
+}
 
 namespace EntityFuncs 
 {
@@ -165,44 +188,54 @@ namespace EntityFuncs
 
 void AFlockingBrain::ApplyBehaviors()
 {
-	int SepCounter = 0;
-	int CohCounter = 0;
-	int AlignCounter = 0;
+	/*
+	int count = 0;
+	if (Entities.Num() != 0)
+	{
+		for (AFlockingBaseActor* Entity : Entities)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity loc: %f, %f ,%f, count %i "), Entity->GetActorLocation().X, Entity->GetActorLocation().Y,Entity->GetActorLocation().Z, count));
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity data loc: %f, %f ,%f, count %i "), Entity->FlockingActorData->Location.X, Entity->FlockingActorData->Location.Y,Entity->FlockingActorData->Location.Z, count));
+			count++;
+		}
 
-	FVector TotalSeparationForce = FVector::ZeroVector;
+	}
+	
+
+	
+	for (int i = 0; i <Entities.Num() -1; i++)
+	{
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity loc: %f, %f ,%f, count %i "), Entities[i]->GetActorLocation().X, Entities[i]->GetActorLocation().Y, Entities[i]->GetActorLocation().Z, CohCounter));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Data loc: %f, %f ,%f, count %i"), EntitiesFlockingData[i].Location.X, EntitiesFlockingData[i].Location.Y, EntitiesFlockingData[i].Location.Z, CohCounter));
+		CohCounter++;
+		
+		//Entity->UpdateSteerForce(EntitiesFlockingData);
+	}
 
 	
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
 		Entities[i]->UpdateSteerForce(EntitiesFlockingData);
-	}
-
-	
-	/*
-	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
-	{
-		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation);
+		
 		for (int j = 0; j < EntitiesFlockingData.Num(); j++)
 		{
-			if (EntitiesFlockingData[i]->ID != EntitiesFlockingData[j]->ID)
+			if (EntitiesFlockingData[i].ID != EntitiesFlockingData[j].ID)
 			{
-				float Distance = (EntitiesFlockingData[i]->Location - EntitiesFlockingData[j]->Location).Length();
+				float Distance = (EntitiesFlockingData[i].Location - EntitiesFlockingData[j].Location).Length();
 				if (Distance < DesiredSeparationRadius * 2) 
 				{
-					TotalSeparationForce += (EntitiesFlockingData[i]->Location - EntitiesFlockingData[j]->Location );
+					TotalSeparationForce += (EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location);
 					SepCounter++;
 				}
 			}
 		}
 		Separation = EntityFuncs::CalculateSeparationForce(SepCounter, TotalSeparationForce);
 		Separation *= SeparationWeight;
-		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation);
+		Entities[i]->UpdateSteerForce(&EntitiesFlockingData, Separation);
 		//EntitiesFlockingData[i].SteerForce += Separation * 300.f;
+		Separation = FVector::ZeroVector;
 		
-
 	}
-
-	
 	*/
 	
 	

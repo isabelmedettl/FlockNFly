@@ -41,16 +41,18 @@ public:
 	USphereComponent* CollisionComponent;
 			
 	/** Applies three rules of flocking, modifying volocity accordingly and updates data*/
-	void UpdateSteerForce(TArray<FFlockingActorData> EntitiesFlockingData);
+	void UpdateSteerForce(const TArray<FFlockingActorData> &EntitiesFlockingData);
 
 	void SetFlockingDataPointer(FFlockingActorData* Pointer);
+
+	void SetFlockingDataProperties(FVector Velocity, FVector Acceleration, FVector, FVector Location, float DesiredSeparationRadius, float DesiredCohesionRadius, float DesiredAlignmentRadius, int32 ID);
 	
-
-
+	/** Struct containing data for flocking behavior*/
+	FFlockingActorData* FlockingActorData;
+	
 private:
 
-	/** Struct containing data for flocking behavior*/
-	FFlockingActorData* FlockingActorData; 
+ 
 	
 	/** Limits magnitude of velocity vector */
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))

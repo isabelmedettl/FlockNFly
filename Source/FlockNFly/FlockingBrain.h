@@ -16,7 +16,7 @@ struct FFlockingActorData // ta bort all skit, doubles är onödigt, använd flo
 	{
 	GENERATED_BODY()
 
-	/*
+	
 	FFlockingActorData()
 	{
 		Velocity = FVector::ZeroVector;
@@ -28,37 +28,30 @@ struct FFlockingActorData // ta bort all skit, doubles är onödigt, använd flo
 		DesiredAlignmentRadius = 400.f;
 		ID = 0; // bort
 	}
-	*/
+	
 
 	/** Current velocity of entity*/
-	UPROPERTY(VisibleAnywhere, Category = "Flocking")
 	FVector Velocity;
 
 	/** Current acceleration of entity*/
-	UPROPERTY(VisibleAnywhere, Category = "Flocking")
 	FVector Acceleration;
 
 	/** Current steering force of entity*/
-	UPROPERTY(VisibleAnywhere, Category = "Flocking")
 	FVector SteerForce;
 
 	/** Current location of entity in world space */
-	UPROPERTY(VisibleAnywhere, Category = "Flocking")
 	FVector Location;
 	
 	/** Distance of field of vision for separation between entities */
 	float DesiredSeparationRadius = 200.f;
 
 	/** Maximal distance of vision for calculating average position amongst neighbour entities and moving towards that point */
-	UPROPERTY()
 	float DesiredCohesionRadius = 300.f;
 
 	/** Distance of field of vision for calculating average velocity of nearby entities*/
-	UPROPERTY()
 	float DesiredAlignmentRadius = 300.f;
 
 	/** Unique number for idintification*/
-	UPROPERTY(VisibleAnywhere, Category="Flocking")
 	int32 ID; // TA bort
 
 };
@@ -92,10 +85,12 @@ public:
 private:
 
 	/** Array containing pointers to all entities that the actor is managing*/
-	TArray<AFlockingBaseActor*> Entities = TArray<AFlockingBaseActor*>();
+	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
+	TArray<AFlockingBaseActor*> Entities;
 
 	/** Array containing Flocking data structs to all active entities, mapped to Entities*/
-	TArray<FFlockingActorData> EntitiesFlockingData = TArray<FFlockingActorData>();
+	//UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
+	TArray<FFlockingActorData> EntitiesFlockingData;
 	
 	/** Number of boids to spawn*/
 	UPROPERTY(EditAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))

@@ -21,8 +21,8 @@ AFlockingBaseActor::AFlockingBaseActor()
 
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
 	CollisionComponent->SetupAttachment(FlockingMeshComponent);
-	//FlockingActorData = FFlockingActorData();
-	//FlockingActorData.Size = CollisionComponent->GetScaledSphereRadius(); 	
+	
+	
 }
 
 // Called when the game starts or when spawned
@@ -42,9 +42,13 @@ void AFlockingBaseActor::BeginPlay()
 		SetActorRotation(InitialRotation);
 	}
 	// If set to debug, initiate looping timer to call on draw debug function
-	if (bDebug)
+	if (FlockingActorData)
 	{
-		GetWorldTimerManager().SetTimer(DebugTimerHandle, this, &AFlockingBaseActor::OnDebug, DrawDebugDelay, true, 0.1f); // Delay default = 2.f;
+		if (bDebug)
+		{
+			GetWorldTimerManager().SetTimer(DebugTimerHandle, this, &AFlockingBaseActor::OnDebug, DrawDebugDelay, true, 0.1f); // Delay default = 2.f;
+		}
+		FlockingActorData->Location = GetActorLocation();
 	}
 }
 
@@ -58,19 +62,23 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 		CurrentTargetLocation = PlayerCharacter->GetActorLocation() + PlayerCharacter->GetActorForwardVector() + PreferredDistanceToTarget;
 	}
 
-	FlockingActorData->Location = GetActorLocation();
-	
-	const FRotator NewRotation = UKismetMathLibrary::FindLookAtRotation(FlockingActorData->Location, CurrentTargetLocation);
-	SetActorRotation(FRotator(0, NewRotation.Yaw -90, 0));
-
-	FlockingActorData->Acceleration = FlockingActorData->SteerForce / Mass;
-	//FlockingActorData.Velocity += FlockingActorData.SteerForce * DeltaTime;
-	FlockingActorData->Velocity += FlockingActorData->Acceleration;
-	
-	SetActorLocation(FlockingActorData->Location + FlockingActorData->Velocity * DeltaTime);
-	FlockingActorData->Velocity = FlockingActorData->Velocity.GetClampedToMaxSize(MaxSpeed);
+	if (FlockingActorData)
+	{
+		FlockingActorData->Location = GetActorLocation();
+		//DrawDebugSphere(GetWorld(), FlockingActorData->Location, 30.f, 30, FColor::Black, false,20.f);
+		//DrawDebugSphere(GetWorld(), GetActorLocation(), 30.f, 30, FColor::Red, false,20.f);
 
 	
+		const FRotator NewRotation = UKismetMathLibrary::FindLookAtRotation(FlockingActorData->Location, CurrentTargetLocation);
+		SetActorRotation(FRotator(0, NewRotation.Yaw -90, 0));
+
+		FlockingActorData->Acceleration = FlockingActorData->SteerForce / Mass;
+		//FlockingActorData.Velocity += FlockingActorData.SteerForce * DeltaTime;
+		FlockingActorData->Velocity += FlockingActorData->Acceleration;
+	
+		SetActorLocation(FlockingActorData->Location + FlockingActorData->Velocity * DeltaTime);
+		FlockingActorData->Velocity = FlockingActorData->Velocity.GetClampedToMaxSize(MaxSpeed);
+	}
 }
 
 FVector AFlockingBaseActor::CalculateSeekForce()
@@ -84,11 +92,17 @@ FVector AFlockingBaseActor::CalculateSeekForce()
 }
 
 
-void AFlockingBaseActor::UpdateSteerForce(TArray<FFlockingActorData> EntitiesFlockingData) //TArray<FFlockingActorData*> FlockingActorDatas
+void AFlockingBaseActor::UpdateSteerForce(const TArray<FFlockingActorData> &EntitiesFlockingData) //TArray<FFlockingActorData*> FlockingActorDatas
 {
-	
 	FlockingActorData->SteerForce = CalculateSeekForce();
 
+	/*
+	if (Force != FVector::ZeroVector)
+	{
+		FlockingActorData->SteerForce = CalculateSeekForce() + (Force * MaxSpeed);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + Force * MaxSpeed, FColor::Purple, false, 0.1f, 0, 10);
+	}
+	*/
 	
 	FVector SeparationForce = FVector::ZeroVector;
 	int32 Counter = 0;
@@ -108,6 +122,7 @@ void AFlockingBaseActor::UpdateSteerForce(TArray<FFlockingActorData> EntitiesFlo
 			}
 		}
 	}
+	
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Tot Separation Force: %f, %f, %f, "), SeparationForce.X, SeparationForce.Y, SeparationForce.Z));
 
 	// Adds average difference of locations to velocity
@@ -120,8 +135,7 @@ void AFlockingBaseActor::UpdateSteerForce(TArray<FFlockingActorData> EntitiesFlo
 
 	SeparationForce *= 3;
 	FlockingActorData->SteerForce += SeparationForce * 60;
-
-	DrawDebugLine(GetWorld(), FlockingActorData->Location, FlockingActorData->Location + FlockingActorData->SteerForce, FColor::Red, false, 0.1f, 0, 10);
+	
 
 
 	
@@ -167,6 +181,16 @@ void AFlockingBaseActor::UpdateSteerForce(TArray<FFlockingActorData> EntitiesFlo
 void AFlockingBaseActor::SetFlockingDataPointer(FFlockingActorData* Pointer)
 {
 	FlockingActorData = Pointer;
+	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Loc Data set in actor: %f, %f, %f, ID: %i"), FlockingActorData->Location.X, FlockingActorData->Location.Y, FlockingActorData->Location.Z, FlockingActorData->ID));
+	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Desired Sep Data set in actor: %f ID: %i"), FlockingActorData->DesiredSeparationRadius, FlockingActorData->ID));
+
+	DrawDebugSphere(GetWorld(), FlockingActorData->Location, 80.f, 30, FColor::Black, true,10.f);
+
+}
+
+void AFlockingBaseActor::SetFlockingDataProperties(FVector Velocity, FVector Acceleration, FVector, FVector Location,
+	float DesiredSeparationRadius, float DesiredCohesionRadius, float DesiredAlignmentRadius, int32 ID)
+{
 }
 
 /*
