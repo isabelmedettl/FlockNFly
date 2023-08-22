@@ -82,15 +82,19 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	
+
 private:
 
+
+	/** Array containing Flocking data structs to all active entities, mapped to Entities*/
+	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
+	TArray<FFlockingActorData> EntitiesFlockingData;
+	
 	/** Array containing pointers to all entities that the actor is managing*/
 	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
 	TArray<AFlockingBaseActor*> Entities;
 
-	/** Array containing Flocking data structs to all active entities, mapped to Entities*/
-	//UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
-	TArray<FFlockingActorData> EntitiesFlockingData;
 	
 	/** Number of boids to spawn*/
 	UPROPERTY(EditAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))

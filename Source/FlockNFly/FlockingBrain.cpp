@@ -115,8 +115,7 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 			{
 				if (Counter > 0)
 				{
-					FVector SpawnLocation = GetActorLocation() + FVector(X * DistanceBetweenEntities, Y * DistanceBetweenEntities, SpawnHeight);
-					SpawnLocations.Add(SpawnLocation);
+					SpawnLocations.Add(FVector( GetActorLocation() + FVector(X * DistanceBetweenEntities, Y * DistanceBetweenEntities, SpawnHeight)));
 					Counter--;
 				}
 			}
@@ -128,41 +127,42 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int32 ID)
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	
 	
 	AFlockingBaseActor* NewFlockingEntity = GetWorld()->SpawnActor<AFlockingBaseActor>(FlockingBaseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+	ensure (NewFlockingEntity != nullptr);
 	//DrawDebugSphere(GetWorld(), NewFlockingEntity->GetActorLocation(), 80.f, 30, FColor::Blue, true,10.f);
-
+	
 	
 	FFlockingActorData NewEntityData;
 	
 	NewEntityData.DesiredSeparationRadius = DesiredSeparationRadius;
 	NewEntityData.DesiredCohesionRadius = DesiredCohesionRadius;
 	NewEntityData.DesiredAlignmentRadius = DesiredAlignmentRadius;
-	NewEntityData.Location = SpawnLocation;
+	//NewEntityData.Location = SpawnLocation;
 
 	
-	
-	
-
 	const int32 EntityDataIndex = EntitiesFlockingData.Add(NewEntityData);
 	NewEntityData.ID = EntityDataIndex;
-	NewFlockingEntity->SetFlockingDataPointer(&EntitiesFlockingData[EntityDataIndex]);
-	//NewFlockingEntity->SetFlockingDataProperties()
+	NewFlockingEntity->SetFlockingDataPointer(&EntitiesFlockingData[EntityDataIndex], EntityDataIndex);
+	ensure (&EntitiesFlockingData[EntityDataIndex] != nullptr);
+
+	//NewFlockingEntity->SetFlockingDataProperties( SpawnLocation, DesiredSeparationRadius, DesiredCohesionRadius, DesiredAlignmentRadius, EntityDataIndex);
+	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Vel loc set in brain: %f, %f, %f, ID: %i"), NewEntityData.Location.X, NewEntityData.Location.Y, NewEntityData.Location.Z, NewEntityData.ID));
+
 	
 	//DrawDebugSphere(GetWorld(), NewFlockingEntity->FlockingActorData->Location, 80.f, 30, FColor::Black, true,10.f);
-	DrawDebugSphere(GetWorld(), NewEntityData.Location, 80.f, 30, FColor::Red, true,10.f);
-	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Loc Data in brain %f, %f, %f, ID = %i "), NewEntityData.Location.X, NewEntityData.Location.Y, NewEntityData.Location.Z, NewEntityData.ID));
+	//DrawDebugSphere(GetWorld(), NewEntityData.Location, 80.f, 30, FColor::Red, true,10.f);
+	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Loc Data in brain %f, %f, %f, ID = %i "), NewEntityData.Location.X, NewEntityData.Location.Y, NewEntityData.Location.Z, NewEntityData.ID));
 	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Desired Sep Data set in brain: %f ID: %i"), NewEntityData.DesiredSeparationRadius, NewEntityData.ID));
 
 
+	Entities.Add(NewFlockingEntity);
 
 
 	/*
 
 	
-	Entities.Add(NewFlockingEntity);
+	
 
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity index %i "), index));
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity data index %i "), EntityDataIndex));
@@ -188,34 +188,13 @@ namespace EntityFuncs
 
 void AFlockingBrain::ApplyBehaviors()
 {
-	/*
-	int count = 0;
-	if (Entities.Num() != 0)
-	{
-		for (AFlockingBaseActor* Entity : Entities)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity loc: %f, %f ,%f, count %i "), Entity->GetActorLocation().X, Entity->GetActorLocation().Y,Entity->GetActorLocation().Z, count));
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity data loc: %f, %f ,%f, count %i "), Entity->FlockingActorData->Location.X, Entity->FlockingActorData->Location.Y,Entity->FlockingActorData->Location.Z, count));
-			count++;
-		}
+	int Counter = 0;
+	FVector TotalSeparationForce = FVector::ZeroVector;
 
-	}
-	
-
-	
-	for (int i = 0; i <Entities.Num() -1; i++)
-	{
-		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity loc: %f, %f ,%f, count %i "), Entities[i]->GetActorLocation().X, Entities[i]->GetActorLocation().Y, Entities[i]->GetActorLocation().Z, CohCounter));
-		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Data loc: %f, %f ,%f, count %i"), EntitiesFlockingData[i].Location.X, EntitiesFlockingData[i].Location.Y, EntitiesFlockingData[i].Location.Z, CohCounter));
-		CohCounter++;
-		
-		//Entity->UpdateSteerForce(EntitiesFlockingData);
-	}
-
-	
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
-		Entities[i]->UpdateSteerForce(EntitiesFlockingData);
+		ensure(Entities[i] != nullptr);
+		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation);
 		
 		for (int j = 0; j < EntitiesFlockingData.Num(); j++)
 		{
@@ -225,24 +204,58 @@ void AFlockingBrain::ApplyBehaviors()
 				if (Distance < DesiredSeparationRadius * 2) 
 				{
 					TotalSeparationForce += (EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location);
-					SepCounter++;
+					Counter++;
 				}
 			}
 		}
-		Separation = EntityFuncs::CalculateSeparationForce(SepCounter, TotalSeparationForce);
+		Separation = EntityFuncs::CalculateSeparationForce(Counter, TotalSeparationForce);
 		Separation *= SeparationWeight;
-		Entities[i]->UpdateSteerForce(&EntitiesFlockingData, Separation);
+		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation);
 		//EntitiesFlockingData[i].SteerForce += Separation * 300.f;
 		Separation = FVector::ZeroVector;
+	}
+}
+
+	/*
+	for (AFlockingBaseActor* Entity : Entities)
+	{
+		ensure(Entity != nullptr);
+
+		if (Entity->FlockingActorData != nullptr)
+		{
+			Entity->UpdateSteerForce(EntitiesFlockingData, TotalSeparationForce);
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("all is shit ")));
+		}
 		
 	}
+
 	*/
+	/*
+
+	
+		
+	}
+	
 	
 	
 	//EntitiesFlockingData[i].SteerForce += TotalSeparationForce;
 	
+	*/
+
+
+	
+	/*
+	// funkar
+	
+	*/
 	
 
+
+	
+	
 	
 	
 	/*
@@ -255,7 +268,7 @@ void AFlockingBrain::ApplyBehaviors()
 		EntityFuncs::CalculateVelocity();
 	}
 	*/
-}
+
 
 
 

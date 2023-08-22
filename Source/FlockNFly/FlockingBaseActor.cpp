@@ -44,10 +44,12 @@ void AFlockingBaseActor::BeginPlay()
 	// If set to debug, initiate looping timer to call on draw debug function
 	if (FlockingActorData)
 	{
+		/*
 		if (bDebug)
 		{
 			GetWorldTimerManager().SetTimer(DebugTimerHandle, this, &AFlockingBaseActor::OnDebug, DrawDebugDelay, true, 0.1f); // Delay default = 2.f;
 		}
+		*/
 		FlockingActorData->Location = GetActorLocation();
 	}
 }
@@ -62,6 +64,7 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 		CurrentTargetLocation = PlayerCharacter->GetActorLocation() + PlayerCharacter->GetActorForwardVector() + PreferredDistanceToTarget;
 	}
 
+	ensure( FlockingActorData != nullptr);
 	if (FlockingActorData)
 	{
 		FlockingActorData->Location = GetActorLocation();
@@ -77,6 +80,7 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 		FlockingActorData->Velocity += FlockingActorData->Acceleration;
 	
 		SetActorLocation(FlockingActorData->Location + FlockingActorData->Velocity * DeltaTime);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData->Velocity , FColor::Purple, false, 0.1f, 0, 10);
 		FlockingActorData->Velocity = FlockingActorData->Velocity.GetClampedToMaxSize(MaxSpeed);
 	}
 }
@@ -92,31 +96,34 @@ FVector AFlockingBaseActor::CalculateSeekForce()
 }
 
 
-void AFlockingBaseActor::UpdateSteerForce(const TArray<FFlockingActorData> &EntitiesFlockingData) //TArray<FFlockingActorData*> FlockingActorDatas
+void AFlockingBaseActor::UpdateSteerForce(const TArray<FFlockingActorData> &EntitiesData, FVector Force) //TArray<FFlockingActorData*> FlockingActorDatas
 {
-	FlockingActorData->SteerForce = CalculateSeekForce();
+	ensure(FlockingActorData != nullptr);
+	FlockingActorData->SteerForce = CalculateSeekForce() + Force * 10;;
+	//FlockingActorData->SteerForce += Force * 10;
+	
 
-	/*
+	
 	if (Force != FVector::ZeroVector)
 	{
-		FlockingActorData->SteerForce = CalculateSeekForce() + (Force * MaxSpeed);
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + Force * MaxSpeed, FColor::Purple, false, 0.1f, 0, 10);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + Force * MaxSpeed, FColor::Red, false, 0.1f, 0, 10);
 	}
-	*/
 	
+
+	/*
 	FVector SeparationForce = FVector::ZeroVector;
 	int32 Counter = 0;
 
-	for (FFlockingActorData Other : EntitiesFlockingData)
+	for (int i = 0; i < EntitiesData.Num(); i++)
 	{
-		if (FlockingActorData->ID != Other.ID)
+		if (FlockingActorData->ID != EntitiesData[i].ID)
 		{
 			// göras i namespace?
-			double Distance = (FlockingActorData->Location - Other.Location).Length();
+			double Distance = (FlockingActorData->Location - EntitiesData[i].Location).Length();
 			// if other entity is too close, move away from it
 			if (Distance < FlockingActorData->DesiredSeparationRadius * 2)
 			{
-				FVector Difference = Other.Location -FlockingActorData->Location;
+				FVector Difference = EntitiesData[i].Location -FlockingActorData->Location;
 				SeparationForce += Difference;
 				Counter++;
 			}
@@ -136,8 +143,8 @@ void AFlockingBaseActor::UpdateSteerForce(const TArray<FFlockingActorData> &Enti
 	SeparationForce *= 3;
 	FlockingActorData->SteerForce += SeparationForce * 60;
 	
-
-
+	
+	*/
 	
 	
 	/*
@@ -178,22 +185,33 @@ void AFlockingBaseActor::UpdateSteerForce(const TArray<FFlockingActorData> &Enti
 	*/
 }
 
-void AFlockingBaseActor::SetFlockingDataPointer(FFlockingActorData* Pointer)
+void AFlockingBaseActor::SetFlockingDataPointer(FFlockingActorData* Pointer, int32 ID)
 {
+	ensure (Pointer != nullptr);
 	FlockingActorData = Pointer;
-	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Loc Data set in actor: %f, %f, %f, ID: %i"), FlockingActorData->Location.X, FlockingActorData->Location.Y, FlockingActorData->Location.Z, FlockingActorData->ID));
-	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Desired Sep Data set in actor: %f ID: %i"), FlockingActorData->DesiredSeparationRadius, FlockingActorData->ID));
+	FlockingActorData->ID = ID;
+	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Vel loc set in actor: %f, %f, %f, ID: %i"), FlockingActorData->Location.X, FlockingActorData->Location.Y, FlockingActorData->Location.Z, FlockingActorData->ID));
 
-	DrawDebugSphere(GetWorld(), FlockingActorData->Location, 80.f, 30, FColor::Black, true,10.f);
-
-}
-
-void AFlockingBaseActor::SetFlockingDataProperties(FVector Velocity, FVector Acceleration, FVector, FVector Location,
-	float DesiredSeparationRadius, float DesiredCohesionRadius, float DesiredAlignmentRadius, int32 ID)
-{
+	//DrawDebugSphere(GetWorld(), FlockingActorData->Location, 80.f, 30, FColor::Black, true,10.f);
 }
 
 /*
+void AFlockingBaseActor::SetFlockingDataProperties(const FVector &Location,
+	float DesiredSeparationRadius, float DesiredCohesionRadius, float DesiredAlignmentRadius, int32 ID)
+{
+	
+	FlockingActorData->Location = Location;
+	FlockingActorData->DesiredSeparationRadius = DesiredSeparationRadius;
+	FlockingActorData->DesiredCohesionRadius = DesiredCohesionRadius;
+	FlockingActorData->DesiredAlignmentRadius = DesiredAlignmentRadius;
+	FlockingActorData->ID = ID;
+
+	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Vel loc set in actor: %f, %f, %f, ID: %i"), FlockingActorData->Location.X, FlockingActorData->Location.Y, FlockingActorData->Location.Z, FlockingActorData->ID));
+	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Raiuses set in actor: %f, %f, %f, ID: %i"), FlockingActorData->DesiredSeparationRadius, FlockingActorData->DesiredCohesionRadius,FlockingActorData->DesiredAlignmentRadius, FlockingActorData->ID));
+
+}
+
+
 
 FVector AFlockingBaseActor::CalculateCohesionForce(TArray<AFlockingBaseActor*> &Entities) 
 {
@@ -288,10 +306,10 @@ FVector AFlockingBaseActor::CalculateAlignmentForce(TArray<AFlockingBaseActor*>&
 */
 void AFlockingBaseActor::OnDebug() const
 {
-	DrawDebugSphere(GetWorld(), CurrentTargetLocation, 30.f, 30, FColor::Black, false,0.2f);
+	//DrawDebugSphere(GetWorld(), CurrentTargetLocation, 30.f, 30, FColor::Black, false,0.2f);
 	//DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData.DesiredAlignmentRadius, 30, FColor::Red, false, 0.2f);
 	//DrawDebugSphere(GetWorld(), FlockingActorData.Location, FlockingActorData.DesiredCohesionRadius, 30, FColor::Green, false, 0.2f);
-	DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData->DesiredSeparationRadius, 30, FColor::Green, false, 0.2f);
+	//DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData->DesiredSeparationRadius, 30, FColor::Green, false, 0.2f);
 //	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData.Velocity, FColor::Purple, false, 0.1f, 0, 10);
 
 
