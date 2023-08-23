@@ -99,7 +99,7 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 
 		// Calculate number of cols and rows based on ideal shape
 		EntityColumns = FMath::CeilToInt32(IdealHeight);
-		EntityRows = FMath::CeilToInt32(IdealHeight);
+		EntityRows = FMath::CeilToInt32(IdealWidth);
 		
 		// Calculate locations for boids to spawn at in world space, depending on actors placement
 		int32 StartX = -(EntityColumns - 1) / 2;
@@ -134,7 +134,8 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int32 ID)
 	
 	
 	FFlockingActorData NewEntityData;
-	
+
+	// redundant
 	NewEntityData.DesiredSeparationRadius = DesiredSeparationRadius;
 	NewEntityData.DesiredCohesionRadius = DesiredCohesionRadius;
 	NewEntityData.DesiredAlignmentRadius = DesiredAlignmentRadius;
@@ -183,13 +184,30 @@ namespace EntityFuncs
 		}
 		return FVector::ZeroVector;
 	}
+
+	FVector CalculateCohesionForce(int Counter, FVector &TotalCohesionForce, FVector &CenterOfMass, const FVector &Location)
+	{
+		if (Counter > 0)
+		{
+			CenterOfMass /= Counter;
+			FVector MyTotalCohesionForce = FVector(CenterOfMass.X - Location.X, CenterOfMass.Y - Location.Y, CenterOfMass.Z - Location.Z);
+			MyTotalCohesionForce.Normalize();
+			return MyTotalCohesionForce;
+			
+		}
+		return FVector::ZeroVector;
+	}
+	
 }
 
 
 void AFlockingBrain::ApplyBehaviors()
 {
-	int Counter = 0;
+	int SeparationCounter = 0;
+	int CohesionCounter = 0;
 	FVector TotalSeparationForce = FVector::ZeroVector;
+	FVector TotalCohesionForce = FVector::ZeroVector;
+	FVector CenterOfMass = FVector::ZeroVector;
 
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
@@ -198,25 +216,63 @@ void AFlockingBrain::ApplyBehaviors()
 		
 		for (int j = 0; j < EntitiesFlockingData.Num(); j++)
 		{
+			ensure(Entities[i]->FlockingActorData != nullptr);
 			if (EntitiesFlockingData[i].ID != EntitiesFlockingData[j].ID)
 			{
-				float Distance = (EntitiesFlockingData[i].Location - EntitiesFlockingData[j].Location).Length();
+				float Distance = (EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location).Length();
 				if (Distance < DesiredSeparationRadius * 2) 
 				{
 					TotalSeparationForce += (EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location);
-					Counter++;
+					SeparationCounter++;
+				}
+				if (Distance < DesiredCohesionRadius * 2 && Distance > DesiredSeparationRadius * 2)
+				{
+					CenterOfMass += EntitiesFlockingData[j].Location;
+					CohesionCounter++;
 				}
 			}
 		}
-		Separation = EntityFuncs::CalculateSeparationForce(Counter, TotalSeparationForce);
+		Separation = EntityFuncs::CalculateSeparationForce(SeparationCounter, TotalSeparationForce);
 		Separation *= SeparationWeight;
-		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation);
+		//Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation);
+
+		if (CohesionCounter > 0)
+		{
+			DrawDebugSphere(GetWorld(), CenterOfMass /= CohesionCounter, 30.f, 30, FColor::Green, false, 0.2f);
+		}
+		
+		Cohesion = EntityFuncs::CalculateCohesionForce(CohesionCounter, TotalCohesionForce, CenterOfMass, EntitiesFlockingData[i].Location);
+		Cohesion *= CohesionWeight;
+		
+		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Cohesion);
+		
 		//EntitiesFlockingData[i].SteerForce += Separation * 300.f;
 		Separation = FVector::ZeroVector;
+		Cohesion = FVector::ZeroVector;
+
+		
 	}
 }
 
-	/*
+void AFlockingBrain::OnDebug(FVector &Location) const
+{
+	//DrawDebugSphere(GetWorld(), CurrentTargetLocation, 30.f, 30, FColor::Black, false,0.2f);
+	//DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData.DesiredAlignmentRadius, 30, FColor::Red, false, 0.2f);
+	DrawDebugSphere(GetWorld(), Location, 30.f, 30, FColor::Green, false, 0.01f);
+	//DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData->DesiredSeparationRadius, 30, FColor::Green, false, 0.2f);
+	
+
+}
+
+void AFlockingBrain::OnDebugLine(FVector &FromLocation, FVector &ToLocation) const
+{
+	//	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData.Velocity, FColor::Purple, false, 0.1f, 0, 10);
+}
+
+
+
+
+/*
 	for (AFlockingBaseActor* Entity : Entities)
 	{
 		ensure(Entity != nullptr);

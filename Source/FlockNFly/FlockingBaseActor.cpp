@@ -50,6 +50,7 @@ void AFlockingBaseActor::BeginPlay()
 			GetWorldTimerManager().SetTimer(DebugTimerHandle, this, &AFlockingBaseActor::OnDebug, DrawDebugDelay, true, 0.1f); // Delay default = 2.f;
 		}
 		*/
+		
 		FlockingActorData->Location = GetActorLocation();
 	}
 }
@@ -99,90 +100,12 @@ FVector AFlockingBaseActor::CalculateSeekForce()
 void AFlockingBaseActor::UpdateSteerForce(const TArray<FFlockingActorData> &EntitiesData, FVector Force) //TArray<FFlockingActorData*> FlockingActorDatas
 {
 	ensure(FlockingActorData != nullptr);
-	FlockingActorData->SteerForce = CalculateSeekForce() + Force * 10;;
-	//FlockingActorData->SteerForce += Force * 10;
-	
-
-	
+	FlockingActorData->SteerForce = CalculateSeekForce() + Force * 10;
+		
 	if (Force != FVector::ZeroVector)
 	{
 		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + Force * MaxSpeed, FColor::Red, false, 0.1f, 0, 10);
 	}
-	
-
-	/*
-	FVector SeparationForce = FVector::ZeroVector;
-	int32 Counter = 0;
-
-	for (int i = 0; i < EntitiesData.Num(); i++)
-	{
-		if (FlockingActorData->ID != EntitiesData[i].ID)
-		{
-			// göras i namespace?
-			double Distance = (FlockingActorData->Location - EntitiesData[i].Location).Length();
-			// if other entity is too close, move away from it
-			if (Distance < FlockingActorData->DesiredSeparationRadius * 2)
-			{
-				FVector Difference = EntitiesData[i].Location -FlockingActorData->Location;
-				SeparationForce += Difference;
-				Counter++;
-			}
-		}
-	}
-	
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Tot Separation Force: %f, %f, %f, "), SeparationForce.X, SeparationForce.Y, SeparationForce.Z));
-
-	// Adds average difference of locations to velocity
-	if (Counter > 0)
-	{
-		SeparationForce /= Counter;
-		SeparationForce *= -1;
-		SeparationForce.Normalize();
-	}
-
-	SeparationForce *= 3;
-	FlockingActorData->SteerForce += SeparationForce * 60;
-	
-	
-	*/
-	
-	
-	/*
-
-	Separation = CalculateSeparationForce(Entities);
-	Cohesion = CalculateCohesionForce(Entities);
-	Alignment = CalculateAlignmentForce(Entities);
-	
-	// apply weights to forces
-	Separation *= SeparationWeight;
-	Cohesion *= CohesionWeight;
-	Alignment *= AlignmentWeight;
-
-	
-	FlockingActorData.SteerForce += Cohesion * MaxSpeed;
-	FlockingActorData.SteerForce += Separation * MaxSpeed;
-	FlockingActorData.SteerForce += Alignment * MaxSpeed;
-	
-	
-	if (Cohesion != FVector::ZeroVector)
-	{
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData.Velocity, FColor::Purple, false, 0.1f, 0, 10);
-	}
-
-	if (Separation != FVector::ZeroVector)
-	{
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData.Velocity, FColor::Red, false, 0.1f, 0, 10);
-	}
-	
-	
-	if (Alignment != FVector::ZeroVector)
-	{
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData.Velocity, FColor::Cyan, false, 0.1f, 0, 10);
-	}
-	
-	//Cohesion = FVector::ZeroVector;
-	//Separation = FVector::ZeroVector;
-	*/
 }
 
 void AFlockingBaseActor::SetFlockingDataPointer(FFlockingActorData* Pointer, int32 ID)
@@ -304,15 +227,77 @@ FVector AFlockingBaseActor::CalculateAlignmentForce(TArray<AFlockingBaseActor*>&
 }
 
 */
-void AFlockingBaseActor::OnDebug() const
-{
-	//DrawDebugSphere(GetWorld(), CurrentTargetLocation, 30.f, 30, FColor::Black, false,0.2f);
-	//DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData.DesiredAlignmentRadius, 30, FColor::Red, false, 0.2f);
-	//DrawDebugSphere(GetWorld(), FlockingActorData.Location, FlockingActorData.DesiredCohesionRadius, 30, FColor::Green, false, 0.2f);
-	//DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData->DesiredSeparationRadius, 30, FColor::Green, false, 0.2f);
-//	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData.Velocity, FColor::Purple, false, 0.1f, 0, 10);
 
+/*
+	FVector SeparationForce = FVector::ZeroVector;
+	int32 Counter = 0;
 
-}
+	for (int i = 0; i < EntitiesData.Num(); i++)
+	{
+		if (FlockingActorData->ID != EntitiesData[i].ID)
+		{
+			// göras i namespace?
+			double Distance = (FlockingActorData->Location - EntitiesData[i].Location).Length();
+			// if other entity is too close, move away from it
+			if (Distance < FlockingActorData->DesiredSeparationRadius * 2)
+			{
+				FVector Difference = EntitiesData[i].Location -FlockingActorData->Location;
+				SeparationForce += Difference;
+				Counter++;
+			}
+		}
+	}
+	
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Tot Separation Force: %f, %f, %f, "), SeparationForce.X, SeparationForce.Y, SeparationForce.Z));
 
+	// Adds average difference of locations to velocity
+	if (Counter > 0)
+	{
+		SeparationForce /= Counter;
+		SeparationForce *= -1;
+		SeparationForce.Normalize();
+	}
 
+	SeparationForce *= 3;
+	FlockingActorData->SteerForce += SeparationForce * 60;
+	
+	
+	*/
+	
+	
+	/*
+
+	Separation = CalculateSeparationForce(Entities);
+	Cohesion = CalculateCohesionForce(Entities);
+	Alignment = CalculateAlignmentForce(Entities);
+	
+	// apply weights to forces
+	Separation *= SeparationWeight;
+	Cohesion *= CohesionWeight;
+	Alignment *= AlignmentWeight;
+
+	
+	FlockingActorData.SteerForce += Cohesion * MaxSpeed;
+	FlockingActorData.SteerForce += Separation * MaxSpeed;
+	FlockingActorData.SteerForce += Alignment * MaxSpeed;
+	
+	
+	if (Cohesion != FVector::ZeroVector)
+	{
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData.Velocity, FColor::Purple, false, 0.1f, 0, 10);
+	}
+
+	if (Separation != FVector::ZeroVector)
+	{
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData.Velocity, FColor::Red, false, 0.1f, 0, 10);
+	}
+	
+	
+	if (Alignment != FVector::ZeroVector)
+	{
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData.Velocity, FColor::Cyan, false, 0.1f, 0, 10);
+	}
+	
+	//Cohesion = FVector::ZeroVector;
+	//Separation = FVector::ZeroVector;
+	*/

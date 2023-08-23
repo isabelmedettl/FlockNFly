@@ -27,10 +27,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	/** Bool for debugging*/
-	UPROPERTY(EditAnywhere, Category= "Debug")
-	bool bDebug = false;
+	
 
 	/** Static mesh comp*/
 	UPROPERTY(EditAnywhere, Category="Mesh")
@@ -77,18 +74,7 @@ private:
 	FVector CurrentTargetLocation = FVector::ZeroVector;
 
 	// ============= Debug ============= // 
-	/** Method for debugging, for drawing variables in world space*/
-	void OnDebug() const;
-
-	/** Method for debugging, draws line between two points */
-	//void OnDebugLine() const;
-
-	/** Tick timer for debugging */
-	FTimerHandle DebugTimerHandle;
-
-	/** Defines how often to draw debug shapes*/
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
-	float DrawDebugDelay = 2.f;	
+	
 
 	// =========== Flocking rules vectors ============ //
 	/** Separation vector*/ 

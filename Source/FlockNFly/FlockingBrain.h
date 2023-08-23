@@ -73,6 +73,10 @@ public:
 	/** Subclass of boid character to be spawned*/
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AFlockingBaseActor> FlockingBaseActorClass;
+
+	/** Bool for debugging*/
+	UPROPERTY(EditAnywhere, Category= "Debug")
+	bool bDebug = false;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -164,6 +168,21 @@ private:
 
 	/** Loops through collection of entities and applies behaviors */
 	void ApplyBehaviors();
+
+	// ========= Debugging =============== //
+	/** Tick timer for debugging */
+	FTimerHandle DebugTimerHandle;
+
+	/** Defines how often to draw debug shapes*/
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	float DrawDebugDelay = 2.f;
+
+	/** Method for debugging, for drawing variables in world space*/
+	void OnDebug(FVector &Location) const;
+
+	/** Method for debugging, draws line between two points */
+	void OnDebugLine(FVector &FromLocation, FVector &ToLocation) const;
+	
 
 	
 	// =========== Flocking variables ============= //
