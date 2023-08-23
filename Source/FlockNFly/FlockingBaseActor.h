@@ -40,7 +40,7 @@ public:
 	/** Applies three rules of flocking, modifying volocity accordingly and updates data*/
 	void UpdateSteerForce(const TArray<FFlockingActorData> &EntitiesData, FVector Force);
 
-	void SetFlockingDataPointer(FFlockingActorData* Pointer, int32 ID);
+	void SetFlockingDataPointer(FFlockingActorData* Pointer, int ID);
 
 	//void SetFlockingDataProperties( const FVector &Location, float DesiredSeparationRadius, float DesiredCohesionRadius, float DesiredAlignmentRadius, int32 ID);
 	

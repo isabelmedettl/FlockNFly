@@ -53,7 +53,7 @@ void AFlockingBrain::SpawnBoids()
 	{
 		CalculatePossibleSpawnFormation();
 		
-		int32 Counter = 0;
+		int Counter = 0;
 		for (FVector Loc : SpawnLocations)
 		{
 			SpawnEntity(Loc, Counter);
@@ -61,6 +61,13 @@ void AFlockingBrain::SpawnBoids()
 		}
 	}	
 }
+
+/*
+void Hej2 (AActor* &MyActorPointerRef)
+{
+	
+}
+*/
 
 void AFlockingBrain::CalculatePossibleSpawnFormation()
 {
@@ -98,20 +105,36 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 		const double IdealHeight = UKismetMathLibrary::Sqrt(NumberOfEntities);
 
 		// Calculate number of cols and rows based on ideal shape
-		EntityColumns = FMath::CeilToInt32(IdealHeight);
-		EntityRows = FMath::CeilToInt32(IdealWidth);
+		EntityColumns = FMath::CeilToInt(IdealHeight);
+		EntityRows = FMath::CeilToInt(IdealWidth);
 		
 		// Calculate locations for boids to spawn at in world space, depending on actors placement
-		int32 StartX = -(EntityColumns - 1) / 2;
-		int32 EndX = (EntityColumns + 1) / 2;
-		int32 StartY = -(EntityRows - 1) / 2;
-		int32 EndY = (EntityRows + 1) / 2;
-	
+		int StartX = -(EntityColumns - 1) / 2;
+		int EndX = (EntityColumns + 1) / 2;
+		int StartY = -(EntityRows - 1) / 2;
+		int EndY = (EntityRows + 1) / 2;
+
+		/*
+		// ReSharper disable once CppTooWideScopeInitStatement
+		AActor* Hej; // pointern ser ut att vara valid men är inne på iokänt minne, den är nullptr men är inte det pga har något random värde som finns i minnet
+		Hej2(Hej);
+		if (Hej != nullptr)
+		{
+			ensure(false);
+		}
+		*/
+		
 		// Spawn boids in calculated locations
-		int32 Counter = NumberOfEntities;
+		int Counter = NumberOfEntities;
+
+		for (int i = 0; i <= NumberOfEntities; i++)
+		{
+			SpawnLocations.Add(FVector::ZeroVector);
+		}
+		/*
 		for (int X = StartX; X < EndX; X++)
 		{
-			for (int Y = StartY; Y < EndY; Y++)
+			for (int Y = StartY; Y < EndY; Y++) // kan ha int8? redundant
 			{
 				if (Counter > 0)
 				{
@@ -120,10 +143,11 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 				}
 			}
 		}
+		*/
 	}
 }
 
-void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int32 ID)
+void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int ID)
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -142,13 +166,16 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int32 ID)
 	//NewEntityData.Location = SpawnLocation;
 
 	
-	const int32 EntityDataIndex = EntitiesFlockingData.Add(NewEntityData);
-	NewEntityData.ID = EntityDataIndex;
-	NewFlockingEntity->SetFlockingDataPointer(&EntitiesFlockingData[EntityDataIndex], EntityDataIndex);
+	const int EntityDataIndex = EntitiesFlockingData.Add(NewEntityData); // arrayen får en kopia, här har jag 2 kopior - en i metoden, en i arrayen
+	FFlockingActorData &MyFD = EntitiesFlockingData[EntityDataIndex]; //
+
+	NewEntityData.ID = EntityDataIndex; //metodens kopia TA bort
+	MyFD.ID = EntityDataIndex;
+	NewFlockingEntity->SetFlockingDataPointer(&EntitiesFlockingData[EntityDataIndex], EntityDataIndex); // retundat att skicka ID 
 	ensure (&EntitiesFlockingData[EntityDataIndex] != nullptr);
 
 	//NewFlockingEntity->SetFlockingDataProperties( SpawnLocation, DesiredSeparationRadius, DesiredCohesionRadius, DesiredAlignmentRadius, EntityDataIndex);
-	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Vel loc set in brain: %f, %f, %f, ID: %i"), NewEntityData.Location.X, NewEntityData.Location.Y, NewEntityData.Location.Z, NewEntityData.ID));
+	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Vel loc set in brain: %f, %f, %f, ID: %i"), NewEntityData.Location.X, NewEntityData.Location.Y, NewEntityData.Location.Z, NewEntityData.ID));
 
 	
 	//DrawDebugSphere(GetWorld(), NewFlockingEntity->FlockingActorData->Location, 80.f, 30, FColor::Black, true,10.f);
@@ -185,19 +212,17 @@ namespace EntityFuncs
 		return FVector::ZeroVector;
 	}
 
-	FVector CalculateCohesionForce(int Counter, FVector &TotalCohesionForce, FVector &CenterOfMass, const FVector &Location)
+	FVector CalculateCohesionForce(int Counter, FVector &CenterOfMass, const FVector &Location) //totalcohesionforce kan vara const, gör kopia på den och skicka tillbaka den
 	{
 		if (Counter > 0)
 		{
 			CenterOfMass /= Counter;
 			FVector MyTotalCohesionForce = FVector(CenterOfMass.X - Location.X, CenterOfMass.Y - Location.Y, CenterOfMass.Z - Location.Z);
 			MyTotalCohesionForce.Normalize();
-			return MyTotalCohesionForce;
-			
+			return MyTotalCohesionForce; // returnerar kopia
 		}
 		return FVector::ZeroVector;
 	}
-	
 }
 
 
@@ -232,21 +257,23 @@ void AFlockingBrain::ApplyBehaviors()
 				}
 			}
 		}
-		Separation = EntityFuncs::CalculateSeparationForce(SeparationCounter, TotalSeparationForce);
+		Separation = EntityFuncs::CalculateSeparationForce(SeparationCounter, TotalSeparationForce); // spara ner i strukten
 		Separation *= SeparationWeight;
-		//Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation);
+		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation); // uppdateringen kan göras hos actorn, inte
 
+        /*
 		if (CohesionCounter > 0)
 		{
 			DrawDebugSphere(GetWorld(), CenterOfMass /= CohesionCounter, 30.f, 30, FColor::Green, false, 0.2f);
 		}
 		
-		Cohesion = EntityFuncs::CalculateCohesionForce(CohesionCounter, TotalCohesionForce, CenterOfMass, EntitiesFlockingData[i].Location);
+		Cohesion = EntityFuncs::CalculateCohesionForce(CohesionCounter, CenterOfMass, EntitiesFlockingData[i].Location);
 		Cohesion *= CohesionWeight;
 		
 		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Cohesion);
 		
 		//EntitiesFlockingData[i].SteerForce += Separation * 300.f;
+		*/
 		Separation = FVector::ZeroVector;
 		Cohesion = FVector::ZeroVector;
 
@@ -258,7 +285,7 @@ void AFlockingBrain::OnDebug(FVector &Location) const
 {
 	//DrawDebugSphere(GetWorld(), CurrentTargetLocation, 30.f, 30, FColor::Black, false,0.2f);
 	//DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData.DesiredAlignmentRadius, 30, FColor::Red, false, 0.2f);
-	DrawDebugSphere(GetWorld(), Location, 30.f, 30, FColor::Green, false, 0.01f);
+	//DrawDebugSphere(GetWorld(), Location, 30.f, 30, FColor::Green, false, 0.01f);
 	//DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData->DesiredSeparationRadius, 30, FColor::Green, false, 0.2f);
 	
 

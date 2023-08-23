@@ -26,7 +26,7 @@ struct FFlockingActorData // ta bort all skit, doubles är onödigt, använd flo
 		DesiredSeparationRadius = 200.f;
 		DesiredCohesionRadius = 300.f;
 		DesiredAlignmentRadius = 400.f;
-		ID = 0; // bort
+		ID = -1; // bort
 	}
 	
 
@@ -52,7 +52,7 @@ struct FFlockingActorData // ta bort all skit, doubles är onödigt, använd flo
 	float DesiredAlignmentRadius = 300.f;
 
 	/** Unique number for idintification*/
-	int32 ID; // TA bort
+	int ID = -1; // TA bort
 
 };
 
@@ -88,7 +88,7 @@ public:
 
 	
 
-private:
+protected: 
 
 
 	/** Array containing Flocking data structs to all active entities, mapped to Entities*/
@@ -102,19 +102,19 @@ private:
 	
 	/** Number of boids to spawn*/
 	UPROPERTY(EditAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
-	int32 NumberOfEntities = 0;
+	int NumberOfEntities = 0;
 
 	/** Defines how many rows of boids to spawn, deciding placement of the boids in worlds space */
-	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta = (AllowPrivateAccess = true))
-	int32 EntityRows = 0;
+	//UPROPERTY(VisibleAnywhere, Category= "Spawning", meta = (AllowPrivateAccess = true))
+	int EntityRows = 0;
 	
 	/** Defines how many columns of boids to spawn, deciding placement of the boids in worlds space */
-	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta = (AllowPrivateAccess = true))
-	int32 EntityColumns = 0;
+	//UPROPERTY(VisibleAnywhere, Category= "Spawning", meta = (AllowPrivateAccess = true))
+	int EntityColumns = 0;
 
 	/** Defines distance in between boids, both at spawn and in formation of flock*/
 	UPROPERTY(EditAnywhere, Category= "Spawning", meta = (AllowPrivateAccess = true))
-	int32 DistanceBetweenEntities = 0;
+	int DistanceBetweenEntities = 0;
 
 	/** Defines height in world space at which boids are going to spawn*/
 	UPROPERTY(EditAnywhere, Category="Spawning", meta = (AllowPrivateAccess = true))
@@ -138,7 +138,7 @@ private:
 	/** Pointer to player Character*/
 	AFlockNFlyCharacter* PlayerCharacter;
 
-	void SpawnEntity(const FVector &SpawnLocation, int32 ID);
+	void SpawnEntity(const FVector &SpawnLocation, int ID);
 
 
 	// ======= Weights and methods for flocking behaviors ========= //
@@ -152,19 +152,19 @@ private:
 
 	/** Multiplyer for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 CohesionWeight = 1.2f;
+	int CohesionWeight = 1.2f;
 
 	/** Multiplyer for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 SeekWeight = 1.f;
+	int SeekWeight = 1.f;
 	
 	/** Multiplyer for applying separation force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 SeparationWeight = 3.f;
+	int SeparationWeight = 3.f;
 
 	/** Multiplyer for applying alignment force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int32 AlignmentWeight = 1.2f;
+	int AlignmentWeight = 1.2f;
 
 	/** Loops through collection of entities and applies behaviors */
 	void ApplyBehaviors();
