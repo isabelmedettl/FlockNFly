@@ -30,29 +30,7 @@ void AFlockingBaseActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	PlayerCharacter = Cast<AFlockNFlyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	if( PlayerCharacter != nullptr )
-	{
-		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), PlayerCharacter->GetActorLocation()));
-
-		// Calculate the location of the AI character relative to the player, and rotation
-		CurrentTargetLocation = PlayerCharacter->GetActorLocation();
-		const FVector DirectionToTarget = CurrentTargetLocation - GetActorLocation();
-		const FRotator InitialRotation = DirectionToTarget.ToOrientationRotator();
-		SetActorRotation(InitialRotation);
-	}
-	// If set to debug, initiate looping timer to call on draw debug function
-	if (FlockingActorData)
-	{
-		/*
-		if (bDebug)
-		{
-			GetWorldTimerManager().SetTimer(DebugTimerHandle, this, &AFlockingBaseActor::OnDebug, DrawDebugDelay, true, 0.1f); // Delay default = 2.f;
-		}
-		*/
-		
-		FlockingActorData->Location = GetActorLocation();
-	}
+	
 }
 
 // Called every frame
@@ -60,65 +38,45 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if( PlayerCharacter != nullptr )
-	{
-		CurrentTargetLocation = PlayerCharacter->GetActorLocation() + PlayerCharacter->GetActorForwardVector() + PreferredDistanceToTarget;
-	}
-
-	// sätta location 
-	
 	ensure( FlockingActorData != nullptr);
+	
+}
+
+
+
+void AFlockingBaseActor::UpdateSteerForce(const FVector &Force)  // skicka ref = bra, gör ingen kopia.
+{
+	ensure(FlockingActorData != nullptr);
+	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Force: %f, %f, %f,"), Force.X, Force.Y, Force.Z));
+	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("SeekForce: %f, %f, %f, ID: %i"), CurrentSeekForce.X, CurrentSeekForce.Y, CurrentSeekForce.Z, EntitiesFlockingData[i].ID));
+
+	FlockingActorData->SteerForce = Force;
+	
+}
+
+void AFlockingBaseActor::UpdateLocation(float DeltaTime)
+{
 	if (FlockingActorData)
 	{
 		FlockingActorData->Location = GetActorLocation(); // actorn ska bara sätta sin position beroende på strukten. 
-		//DrawDebugSphere(GetWorld(), FlockingActorData->Location, 30.f, 30, FColor::Black, false,20.f);
-		//DrawDebugSphere(GetWorld(), GetActorLocation(), 30.f, 30, FColor::Red, false,20.f);
 
-	
-		const FRotator NewRotation = UKismetMathLibrary::FindLookAtRotation(FlockingActorData->Location, CurrentTargetLocation);
-		SetActorRotation(FRotator(0, NewRotation.Yaw -90, 0));
-
-		FlockingActorData->Acceleration = FlockingActorData->SteerForce / Mass; //Mass i strukten
+		FlockingActorData->Acceleration = FlockingActorData->SteerForce / FlockingActorData->Mass; //Mass i strukten
 		//FlockingActorData.Velocity += FlockingActorData.SteerForce * DeltaTime;
 		FlockingActorData->Velocity += FlockingActorData->Acceleration;
-	
+
+		FlockingActorData->Velocity = FlockingActorData->Velocity.GetClampedToMaxSize(FlockingActorData->MaxSpeed);
 		SetActorLocation(FlockingActorData->Location + FlockingActorData->Velocity * DeltaTime);
 		//DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData->Velocity , FColor::Purple, false, 0.1f, 0, 10);
-		FlockingActorData->Velocity = FlockingActorData->Velocity.GetClampedToMaxSize(MaxSpeed);
+		
 	}
-}
-
-FVector AFlockingBaseActor::CalculateSeekForce()
-{
-	const FVector Desired = (CurrentTargetLocation - FlockingActorData->Location).GetSafeNormal() * MaxSpeed; // CurrentTargetLocation finnas i strukten
-	FVector NewSteeringForce = Desired - FlockingActorData->Velocity;
-	NewSteeringForce /= MaxSpeed;
-	NewSteeringForce *= MaxForce;
 	
-	return NewSteeringForce;
 }
 
-
-void AFlockingBaseActor::UpdateSteerForce(const TArray<FFlockingActorData> &EntitiesData, FVector Force) // skicka ref = bra, gör ingen kopia.
+void AFlockingBaseActor::SetFlockingDataPointer(FFlockingActorData& Pointer)
 {
-	ensure(FlockingActorData != nullptr);
-	FlockingActorData->SteerForce = CalculateSeekForce() + Force * 10;
-
-	/*
-	if (Force != FVector::ZeroVector)
-	{
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + Force * 10, FColor::Red, false, 0.1f, 0, 10);
-	}
-	*/
-}
-
-void AFlockingBaseActor::SetFlockingDataPointer(FFlockingActorData* Pointer, int ID)
-{
-	ensure (Pointer != nullptr);
-	FlockingActorData = Pointer;
-	// set location till actors location
-	FlockingActorData->ID = ID;
-	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Vel loc set in actor: %f, %f, %f, ID: %i"), FlockingActorData->Location.X, FlockingActorData->Location.Y, FlockingActorData->Location.Z, FlockingActorData->ID));
+	FlockingActorData = &Pointer;
+	FlockingActorData->Location = GetActorLocation();
+	bHasEntityDataBeenSet = true;
 
 	//DrawDebugSphere(GetWorld(), FlockingActorData->Location, 80.f, 30, FColor::Black, true,10.f);
 }

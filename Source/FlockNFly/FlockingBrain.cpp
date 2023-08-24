@@ -24,6 +24,8 @@ void AFlockingBrain::BeginPlay()
 	PlayerCharacter = Cast<AFlockNFlyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if( PlayerCharacter != nullptr)
 	{
+		EntityTargetLocation = PlayerCharacter->GetActorLocation();
+		
 		if (SpawnHeight < 0.f)
 		{
 			SpawnHeight = GetActorLocation().Y;
@@ -36,21 +38,40 @@ void AFlockingBrain::BeginPlay()
 	}
 
 	// Start looping timer to update flocking entities behavior
-	//GetWorldTimerManager().SetTimer(ApplyBehaviorTimerHandle, this, &AFlockingBrain::ApplyBehaviors, ApplyBehaviorDelay, true,0.1f);
+	//GetWorldTimerManager().SetTimer(ApplyBehaviorTimerHandle, this, &AFlockingBrain::CalculateSteerForce, ApplyBehaviorDelay, true,0.1f);
+	
 }
 
 // Called every frame
 void AFlockingBrain::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	ApplyBehaviors();
+
+	EntityTargetLocation = PlayerCharacter->GetActorLocation() + FVector::ForwardVector * PreferredDistanceToTarget;
+	if (!bHasAssignedBoids)
+	{
+		for (int i = 0; i < EntitiesFlockingData.Num(); i++)
+		{
+			Entities[i]->SetFlockingDataPointer(EntitiesFlockingData[i]);
+		}
+		bHasAssignedBoids = true;
+	}
+	
+	CalculateSteerForce();
+
+	for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
+	{
+		Entities[i]->UpdateLocation(DeltaTime);
+	}
+
+	// kör entities update
 }
 
 void AFlockingBrain::SpawnBoids()
 {
 	if (!GetWorld()) return;
 	if (NumberOfEntities != 0)
-	{
+	{		
 		CalculatePossibleSpawnFormation();
 		
 		int Counter = 0;
@@ -62,12 +83,6 @@ void AFlockingBrain::SpawnBoids()
 	}	
 }
 
-/*
-void Hej2 (AActor* &MyActorPointerRef)
-{
-	
-}
-*/
 
 void AFlockingBrain::CalculatePossibleSpawnFormation()
 {
@@ -113,28 +128,14 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 		int EndX = (EntityColumns + 1) / 2;
 		int StartY = -(EntityRows - 1) / 2;
 		int EndY = (EntityRows + 1) / 2;
-
-		/*
-		// ReSharper disable once CppTooWideScopeInitStatement
-		AActor* Hej; // pointern ser ut att vara valid men är inne på iokänt minne, den är nullptr men är inte det pga har något random värde som finns i minnet
-		Hej2(Hej);
-		if (Hej != nullptr)
-		{
-			ensure(false);
-		}
-		*/
 		
 		// Spawn boids in calculated locations
 		int Counter = NumberOfEntities;
-
-		for (int i = 0; i <= NumberOfEntities; i++)
-		{
-			SpawnLocations.Add(FVector::ZeroVector);
-		}
-		/*
+		
+		
 		for (int X = StartX; X < EndX; X++)
 		{
-			for (int Y = StartY; Y < EndY; Y++) // kan ha int8? redundant
+			for (int Y = StartY; Y < EndY; Y++) 
 			{
 				if (Counter > 0)
 				{
@@ -143,7 +144,6 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 				}
 			}
 		}
-		*/
 	}
 }
 
@@ -154,52 +154,40 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int ID)
 	
 	AFlockingBaseActor* NewFlockingEntity = GetWorld()->SpawnActor<AFlockingBaseActor>(FlockingBaseActorClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 	ensure (NewFlockingEntity != nullptr);
-	//DrawDebugSphere(GetWorld(), NewFlockingEntity->GetActorLocation(), 80.f, 30, FColor::Blue, true,10.f);
 	
-	
+	// create struct with flocking data, set variables in struct, assign pointer in spawned entity to that struct in array and add both entity and struct in collections
 	FFlockingActorData NewEntityData;
-
-	// redundant
-	NewEntityData.DesiredSeparationRadius = DesiredSeparationRadius;
-	NewEntityData.DesiredCohesionRadius = DesiredCohesionRadius;
-	NewEntityData.DesiredAlignmentRadius = DesiredAlignmentRadius;
-	//NewEntityData.Location = SpawnLocation;
-
-	
+		
 	const int EntityDataIndex = EntitiesFlockingData.Add(NewEntityData); // arrayen får en kopia, här har jag 2 kopior - en i metoden, en i arrayen
-	FFlockingActorData &MyFD = EntitiesFlockingData[EntityDataIndex]; //
-
-	NewEntityData.ID = EntityDataIndex; //metodens kopia TA bort
+	FFlockingActorData &MyFD = EntitiesFlockingData[EntityDataIndex]; 
+	
 	MyFD.ID = EntityDataIndex;
-	NewFlockingEntity->SetFlockingDataPointer(&EntitiesFlockingData[EntityDataIndex], EntityDataIndex); // retundat att skicka ID 
+	MyFD.TargetLocation = EntityTargetLocation;
+	MyFD.Mass = Mass;
+	MyFD.MaxForce =MaxForce;
+	MyFD.MaxSpeed = MaxSpeed;
+	
+	NewFlockingEntity->SetFlockingDataPointer(EntitiesFlockingData[EntityDataIndex]); 
 	ensure (&EntitiesFlockingData[EntityDataIndex] != nullptr);
-
-	//NewFlockingEntity->SetFlockingDataProperties( SpawnLocation, DesiredSeparationRadius, DesiredCohesionRadius, DesiredAlignmentRadius, EntityDataIndex);
-	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Vel loc set in brain: %f, %f, %f, ID: %i"), NewEntityData.Location.X, NewEntityData.Location.Y, NewEntityData.Location.Z, NewEntityData.ID));
-
 	
-	//DrawDebugSphere(GetWorld(), NewFlockingEntity->FlockingActorData->Location, 80.f, 30, FColor::Black, true,10.f);
-	//DrawDebugSphere(GetWorld(), NewEntityData.Location, 80.f, 30, FColor::Red, true,10.f);
-	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Loc Data in brain %f, %f, %f, ID = %i "), NewEntityData.Location.X, NewEntityData.Location.Y, NewEntityData.Location.Z, NewEntityData.ID));
-	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Desired Sep Data set in brain: %f ID: %i"), NewEntityData.DesiredSeparationRadius, NewEntityData.ID));
-
-
 	Entities.Add(NewFlockingEntity);
-
-
-	/*
-
 	
-	
-
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity index %i "), index));
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Entity data index %i "), EntityDataIndex));
-	*/
-
 }
 
-namespace EntityFuncs 
+namespace EntityFlockingFuncs 
 {
+	/** Calculates vector resulting from subtracting the desired position from the current position. The result is the appropriate velocity */
+	FVector CalculateSeekForce (FVector &CurrentTargetLocation, FVector &EntityLocation, FVector &EntityVelocity, const float EntityMaxSpeed, const float EntityMaxForce)
+	{
+		const FVector Desired = (CurrentTargetLocation - EntityLocation).GetSafeNormal() * EntityMaxSpeed; 
+		FVector NewSteeringForce = Desired - EntityVelocity;
+		NewSteeringForce /= EntityMaxSpeed;
+		NewSteeringForce *= EntityMaxForce;
+	
+		return NewSteeringForce;
+	}
+
+	/** Calculates entities to steer away from any neighbor that is within view and within a prescribed minimum separation distance*/
 	FVector CalculateSeparationForce(int Counter, FVector &Separation) // pekare till funktioner?? 
 	{
 		if (Counter > 0)
@@ -212,32 +200,38 @@ namespace EntityFuncs
 		return FVector::ZeroVector;
 	}
 
+	/** Calculates entities position to correspond with average alignment of nearby entities, taking the position of entities within certain radius and steers entity towards the average position of those entites*/
 	FVector CalculateCohesionForce(int Counter, FVector &CenterOfMass, const FVector &Location) //totalcohesionforce kan vara const, gör kopia på den och skicka tillbaka den
 	{
 		if (Counter > 0)
 		{
 			CenterOfMass /= Counter;
-			FVector MyTotalCohesionForce = FVector(CenterOfMass.X - Location.X, CenterOfMass.Y - Location.Y, CenterOfMass.Z - Location.Z);
-			MyTotalCohesionForce.Normalize();
-			return MyTotalCohesionForce; // returnerar kopia
+			FVector TotalCohesionForce = FVector(CenterOfMass.X - Location.X, CenterOfMass.Y - Location.Y, CenterOfMass.Z - Location.Z);
+			TotalCohesionForce.Normalize();
+			return TotalCohesionForce; //returnerar kopia
 		}
 		return FVector::ZeroVector;
 	}
 }
 
 
-void AFlockingBrain::ApplyBehaviors()
+void AFlockingBrain::CalculateSteerForce()
 {
 	int SeparationCounter = 0;
 	int CohesionCounter = 0;
 	FVector TotalSeparationForce = FVector::ZeroVector;
 	FVector TotalCohesionForce = FVector::ZeroVector;
 	FVector CenterOfMass = FVector::ZeroVector;
+	FVector CurrentSeekForce = FVector::ZeroVector;
+	FVector TotalForce = FVector::ZeroVector;;
 
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
 		ensure(Entities[i] != nullptr);
-		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation);
+		
+		EntitiesFlockingData[i].TargetLocation = EntityTargetLocation;
+		CurrentSeekForce = EntityFlockingFuncs::CalculateSeekForce(EntitiesFlockingData[i].TargetLocation, EntitiesFlockingData[i].Location, EntitiesFlockingData[i].Velocity, EntitiesFlockingData[i].MaxSpeed, EntitiesFlockingData[i].MaxForce);
+		Entities[i]->UpdateSteerForce(CurrentSeekForce);
 		
 		for (int j = 0; j < EntitiesFlockingData.Num(); j++)
 		{
@@ -247,35 +241,48 @@ void AFlockingBrain::ApplyBehaviors()
 				float Distance = (EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location).Length();
 				if (Distance < DesiredSeparationRadius * 2) 
 				{
-					TotalSeparationForce += (EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location);
+					TotalSeparationForce += EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location;
 					SeparationCounter++;
 				}
-				if (Distance < DesiredCohesionRadius * 2 && Distance > DesiredSeparationRadius * 2)
+				if (Distance < DesiredCohesionRadius * 2 && Distance > DesiredSeparationRadius * 2 )
 				{
-					CenterOfMass += EntitiesFlockingData[j].Location;
+					Cohesion += EntitiesFlockingData[j].Location;
 					CohesionCounter++;
 				}
 			}
 		}
-		Separation = EntityFuncs::CalculateSeparationForce(SeparationCounter, TotalSeparationForce); // spara ner i strukten
-		Separation *= SeparationWeight;
-		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Separation); // uppdateringen kan göras hos actorn, inte
 
-        /*
+		
+		Separation = EntityFlockingFuncs::CalculateSeparationForce(SeparationCounter, TotalSeparationForce); // spara ner i strukten
+		Separation *= SeparationWeight;
+
+		Cohesion = EntityFlockingFuncs::CalculateCohesionForce(CohesionCounter, CenterOfMass, EntitiesFlockingData[i].Location);
+		Cohesion *= CohesionWeight;
+
+		
+		TotalForce += CurrentSeekForce + Separation * 10 + Cohesion * 10;
+		Entities[i]->UpdateSteerForce(TotalForce); // uppdateringen kan göras hos actorn, inte
+		
+
+		/*
 		if (CohesionCounter > 0)
 		{
-			DrawDebugSphere(GetWorld(), CenterOfMass /= CohesionCounter, 30.f, 30, FColor::Green, false, 0.2f);
+			//EntitiesFlockingData[i].SteerForce += Separation * 300.f;
+			DrawDebugLine(GetWorld(), EntitiesFlockingData[i].Location, EntitiesFlockingData[i].Location + EntitiesFlockingData[i].Velocity, FColor::Purple, false, 0.1f, 0, 10);
+			//DrawDebugSphere(GetWorld(), CenterOfMass /= CohesionCounter, 30.f, 30, FColor::Green, false, 0.5f);
 		}
-		
-		Cohesion = EntityFuncs::CalculateCohesionForce(CohesionCounter, CenterOfMass, EntitiesFlockingData[i].Location);
-		Cohesion *= CohesionWeight;
-		
-		Entities[i]->UpdateSteerForce(EntitiesFlockingData, Cohesion);
-		
-		//EntitiesFlockingData[i].SteerForce += Separation * 300.f;
+		else
+		{
+			DrawDebugLine(GetWorld(), EntitiesFlockingData[i].Location, EntitiesFlockingData[i].Location + EntitiesFlockingData[i].Velocity, FColor::Red, false, 0.1f, 0, 10);
+
+		}
 		*/
+		
+		
+		
+		
 		Separation = FVector::ZeroVector;
-		Cohesion = FVector::ZeroVector;
+		//Cohesion = FVector::ZeroVector;
 
 		
 	}
@@ -297,61 +304,15 @@ void AFlockingBrain::OnDebugLine(FVector &FromLocation, FVector &ToLocation) con
 }
 
 
-
-
 /*
-	for (AFlockingBaseActor* Entity : Entities)
-	{
-		ensure(Entity != nullptr);
-
-		if (Entity->FlockingActorData != nullptr)
+		// ReSharper disable once CppTooWideScopeInitStatement
+		AActor* Hej; // pointern ser ut att vara valid men är inne på iokänt minne, den är nullptr men är inte det pga har något random värde som finns i minnet
+		Hej2(Hej);
+		if (Hej != nullptr)
 		{
-			Entity->UpdateSteerForce(EntitiesFlockingData, TotalSeparationForce);
+			ensure(false);
 		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("all is shit ")));
-		}
-		
-	}
-
-	*/
-	/*
-
-	
-		
-	}
-	
-	
-	
-	//EntitiesFlockingData[i].SteerForce += TotalSeparationForce;
-	
-	*/
-
-
-	
-	/*
-	// funkar
-	
-	*/
-	
-
-
-	
-	
-	
-	
-	/*
-	for (AFlockingBaseActor* Entity : Entities) // iterera alla structar
-	{
-		
-		Entity->UpdateSteerForce(Entities, SeekWeight, CohesionWeight, AlignmentWeight, SeparationWeight);
-
-		// beräkna steerforce för varje entitet
-		EntityFuncs::CalculateVelocity();
-	}
-	*/
-
+		*/
 
 
 

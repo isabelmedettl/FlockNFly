@@ -12,7 +12,7 @@ class AFlockNFlyCharacter;
 class USphereComponent;
 
 USTRUCT()
-struct FFlockingActorData // ta bort all skit, doubles är onödigt, använd floats pga kostsamhet och inte prec. Gör om så det inte är properties, utan setts från brain
+struct FFlockingActorData 
 	{
 	GENERATED_BODY()
 
@@ -23,10 +23,15 @@ struct FFlockingActorData // ta bort all skit, doubles är onödigt, använd flo
 		Acceleration = FVector::ZeroVector;
 		SteerForce = FVector::ZeroVector;
 		Location = FVector::ZeroVector;
-		DesiredSeparationRadius = 200.f;
-		DesiredCohesionRadius = 300.f;
-		DesiredAlignmentRadius = 400.f;
-		ID = -1; // bort
+		Separation = FVector::ZeroVector;
+		Cohesion = FVector::ZeroVector;
+		Alignment = FVector::ZeroVector;
+		SeekForce = FVector::ZeroVector;
+		TargetLocation = FVector::ZeroVector;
+		MaxSpeed = -1.0f;
+		MaxForce = -1.0f;
+		Mass = -1.0f;
+		ID = -1; 
 	}
 	
 
@@ -42,17 +47,34 @@ struct FFlockingActorData // ta bort all skit, doubles är onödigt, använd flo
 	/** Current location of entity in world space */
 	FVector Location;
 	
-	/** Distance of field of vision for separation between entities */
-	float DesiredSeparationRadius = 200.f;
+	/** Separation vector*/ 
+	FVector Separation = FVector::ZeroVector;
+	
+	/** Cohesion vector*/
+	FVector Cohesion = FVector::ZeroVector;
 
-	/** Maximal distance of vision for calculating average position amongst neighbour entities and moving towards that point */
-	float DesiredCohesionRadius = 300.f;
+	/** Alignment vector */
+	FVector Alignment = FVector::ZeroVector;
 
-	/** Distance of field of vision for calculating average velocity of nearby entities*/
-	float DesiredAlignmentRadius = 300.f;
+	/** Force to seek target location*/
+	FVector SeekForce;
 
+	
+
+	/** Location or moving object in world space to which entity is steering towards*/
+	FVector TargetLocation = FVector::ZeroVector;
+
+	/** Limits magnitude of velocity vector */
+	float MaxSpeed = -1.0f;
+
+	/** Limits magnitude of acceleration vector */
+	float MaxForce = -1.0f;
+
+	/** Mass of entity*/
+	float Mass = -1.0f;
+	
 	/** Unique number for idintification*/
-	int ID = -1; // TA bort
+	int ID = -1; 
 
 };
 
@@ -99,17 +121,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
 	TArray<AFlockingBaseActor*> Entities;
 
+	/** Distance to keep from target*/
+	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
+	float PreferredDistanceToTarget = 50.f;
 	
 	/** Number of boids to spawn*/
 	UPROPERTY(EditAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
 	int NumberOfEntities = 0;
 
 	/** Defines how many rows of boids to spawn, deciding placement of the boids in worlds space */
-	//UPROPERTY(VisibleAnywhere, Category= "Spawning", meta = (AllowPrivateAccess = true))
 	int EntityRows = 0;
 	
 	/** Defines how many columns of boids to spawn, deciding placement of the boids in worlds space */
-	//UPROPERTY(VisibleAnywhere, Category= "Spawning", meta = (AllowPrivateAccess = true))
 	int EntityColumns = 0;
 
 	/** Defines distance in between boids, both at spawn and in formation of flock*/
@@ -130,13 +153,13 @@ protected:
 	 */
 	void CalculatePossibleSpawnFormation();
 
-	/** Check for overlap at a potential spawn location
-	 * @param NewLocation location to check for collision
-	 * @return true if collision is found
-	 */
 
-	/** Pointer to player Character*/
+	/** Pointer to player character*/
+	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess = true))
 	AFlockNFlyCharacter* PlayerCharacter;
+
+	
+
 
 	void SpawnEntity(const FVector &SpawnLocation, int ID);
 
@@ -166,8 +189,24 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
 	int AlignmentWeight = 1.2f;
 
+	/** Limits magnitude of velocity vector */
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	float MaxSpeed = 400.f;
+
+	/** Limits magnitude of acceleration vector */
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	float MaxForce = 50.f;
+
+	/** Mass of entity*/
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	float Mass = 0.7f;
+
 	/** Loops through collection of entities and applies behaviors */
-	void ApplyBehaviors();
+	void CalculateSteerForce();
+
+	/** Target location toward which entities should steer to*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	FVector EntityTargetLocation;
 
 	// ========= Debugging =============== //
 	/** Tick timer for debugging */
@@ -182,8 +221,8 @@ protected:
 
 	/** Method for debugging, draws line between two points */
 	void OnDebugLine(FVector &FromLocation, FVector &ToLocation) const;
-	
 
+	
 	
 	// =========== Flocking variables ============= //
 	/** Distance of field of vision for separation between entities */
@@ -198,6 +237,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Flocking")
 	float DesiredAlignmentRadius = 300.f;
 
+	
 	// =========== Flocking force vectors to apply to entities ============ //
 	
 	/** Separation vector*/ 
@@ -209,6 +249,7 @@ protected:
 	/** Alignment vector */
 	FVector Alignment = FVector::ZeroVector;
 
-	
+	/** Bool for checking if all entity actors has had their pointer to data struct set*/
+	bool bHasAssignedBoids = false;
 	
 };
