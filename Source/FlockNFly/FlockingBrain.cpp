@@ -57,10 +57,10 @@ void AFlockingBrain::Tick(float DeltaTime)
 		bHasAssignedBoids = true;
 	}
 	
-	//CalculateSteerForce();
-
 	for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
 	{
+		EntitiesFlockingData[i].SteerForce = CalculateSteerForce(i);
+		CalculateNewVelocity(i);
 		Entities[i]->UpdateLocation(DeltaTime);
 	}
 
@@ -174,6 +174,13 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int ID)
 	
 }
 
+void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
+{
+	EntitiesFlockingData[IndexOfData].Acceleration = EntitiesFlockingData[IndexOfData].SteerForce / EntitiesFlockingData[IndexOfData].Mass;
+	EntitiesFlockingData[IndexOfData].Velocity += EntitiesFlockingData[IndexOfData].Acceleration;
+	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].MaxSpeed);
+}
+
 namespace EntityFlockingFuncs 
 {
 	/** Calculates vector resulting from subtracting the desired position from the current position. The result is the appropriate velocity */
@@ -228,7 +235,7 @@ namespace EntityFlockingFuncs
 }
 
 
-FVector AFlockingBrain::CalculateSteerForce(int Index) // skicka in index på den datan som behandlas. loopa en loop, set 
+FVector AFlockingBrain::CalculateSteerForce(const int Index) // skicka in index på den datan som behandlas. loopa en loop, set 
 {
 	int SeparationCounter = 0;
 	int CohesionCounter = 0;
@@ -242,7 +249,7 @@ FVector AFlockingBrain::CalculateSteerForce(int Index) // skicka in index på de
 	ensure(Entities[Index] != nullptr);
 		
 	EntitiesFlockingData[Index].TargetLocation = EntityTargetLocation;
-	CurrentSeekForce = EntityFlockingFuncs::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[i].MaxSpeed, EntitiesFlockingData[i].MaxForce);
+	CurrentSeekForce = EntityFlockingFuncs::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce);
 	Entities[Index]->UpdateSteerForce(CurrentSeekForce);
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
@@ -280,6 +287,8 @@ FVector AFlockingBrain::CalculateSteerForce(int Index) // skicka in index på de
 		
 	TotalForce += CurrentSeekForce + Separation * 10 + Cohesion + Alignment * 10;
 	Separation = FVector::ZeroVector;
+	Cohesion = FVector::ZeroVector;
+	Alignment = FVector::ZeroVector;
 	return TotalForce;
 	
 

@@ -10,9 +10,7 @@
   <component name="ChangeListManager">
     <list default="true" id="7ffacc66-12e9-4a4a-8106-f84752647aa7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vsconfig" beforeDir="false" afterPath="$PROJECT_DIR$/.vsconfig" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.h" afterDir="false" />
     </list>
@@ -29,27 +27,27 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "XThreadsFramesViewSplitterKey": "0.51152736",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "settings.editor.selected.configurable": "CppUnrealEngineOptionsId",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.51152736&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;CppUnrealEngineOptionsId&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "rider.external.source.directories": [
-      "C:\\Users\\mijo1919\\AppData\\Roaming\\JetBrains\\Rider2023.1\\resharper-host\\DecompilerCache",
-      "C:\\Users\\mijo1919\\AppData\\Roaming\\JetBrains\\Rider2023.1\\resharper-host\\SourcesCache",
-      "C:\\Users\\mijo1919\\AppData\\Local\\Symbols\\src"
+  &quot;keyToStringList&quot;: {
+    &quot;rider.external.source.directories&quot;: [
+      &quot;C:\\Users\\mijo1919\\AppData\\Roaming\\JetBrains\\Rider2023.1\\resharper-host\\DecompilerCache&quot;,
+      &quot;C:\\Users\\mijo1919\\AppData\\Roaming\\JetBrains\\Rider2023.1\\resharper-host\\SourcesCache&quot;,
+      &quot;C:\\Users\\mijo1919\\AppData\\Local\\Symbols\\src&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="C++ Project.FlockNFly">
     <configuration name="FlockNFly" type="CppProject" factoryName="C++ Project">
       <configuration_1>
@@ -215,7 +213,8 @@
       <workItem from="1692865566904" duration="5656000" />
       <workItem from="1692872301226" duration="945000" />
       <workItem from="1692878330562" duration="10290000" />
-      <workItem from="1693205374354" duration="3785000" />
+      <workItem from="1693205374354" duration="3815000" />
+      <workItem from="1693218183844" duration="1623000" />
     </task>
     <servers />
   </component>

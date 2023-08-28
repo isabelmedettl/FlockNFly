@@ -60,11 +60,11 @@ void AFlockingBaseActor::UpdateLocation(float DeltaTime)
 	{
 		FlockingActorData->Location = GetActorLocation(); // actorn ska bara sätta sin position beroende på strukten. 
 
-		FlockingActorData->Acceleration = FlockingActorData->SteerForce / FlockingActorData->Mass; //Mass i strukten
+		//FlockingActorData->Acceleration = FlockingActorData->SteerForce / FlockingActorData->Mass; //Mass i strukten
 		//FlockingActorData.Velocity += FlockingActorData.SteerForce * DeltaTime;
-		FlockingActorData->Velocity += FlockingActorData->Acceleration;
+		//FlockingActorData->Velocity += FlockingActorData->Acceleration;
 
-		FlockingActorData->Velocity = FlockingActorData->Velocity.GetClampedToMaxSize(FlockingActorData->MaxSpeed);
+		//FlockingActorData->Velocity = FlockingActorData->Velocity.GetClampedToMaxSize(FlockingActorData->MaxSpeed);
 		SetActorLocation(FlockingActorData->Location + FlockingActorData->Velocity * DeltaTime);
 		//DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData->Velocity , FColor::Purple, false, 0.1f, 0, 10);
 		
