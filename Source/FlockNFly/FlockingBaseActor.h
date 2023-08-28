@@ -70,7 +70,7 @@ private:
 	
 
 	/** Attempts to match the velocity of other entities inside this entity´s visible range by adding neighbours velocity to computation vector*/
-	FVector CalculateAlignmentForce(TArray<AFlockingBaseActor*> &Entities);
+	//FVector CalculateAlignmentForce(TArray<AFlockingBaseActor*> &Entities);
 
 	
 

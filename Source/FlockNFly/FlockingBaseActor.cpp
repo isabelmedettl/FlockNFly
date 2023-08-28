@@ -81,23 +81,8 @@ void AFlockingBaseActor::SetFlockingDataPointer(FFlockingActorData& Pointer)
 	//DrawDebugSphere(GetWorld(), FlockingActorData->Location, 80.f, 30, FColor::Black, true,10.f);
 }
 
+
 /*
-void AFlockingBaseActor::SetFlockingDataProperties(const FVector &Location,
-	float DesiredSeparationRadius, float DesiredCohesionRadius, float DesiredAlignmentRadius, int32 ID)
-{
-	
-	FlockingActorData->Location = Location;
-	FlockingActorData->DesiredSeparationRadius = DesiredSeparationRadius;
-	FlockingActorData->DesiredCohesionRadius = DesiredCohesionRadius;
-	FlockingActorData->DesiredAlignmentRadius = DesiredAlignmentRadius;
-	FlockingActorData->ID = ID;
-
-	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Vel loc set in actor: %f, %f, %f, ID: %i"), FlockingActorData->Location.X, FlockingActorData->Location.Y, FlockingActorData->Location.Z, FlockingActorData->ID));
-	//GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, FString::Printf(TEXT("Raiuses set in actor: %f, %f, %f, ID: %i"), FlockingActorData->DesiredSeparationRadius, FlockingActorData->DesiredCohesionRadius,FlockingActorData->DesiredAlignmentRadius, FlockingActorData->ID));
-
-}
-
-
 
 FVector AFlockingBaseActor::CalculateCohesionForce(TArray<AFlockingBaseActor*> &Entities) 
 {

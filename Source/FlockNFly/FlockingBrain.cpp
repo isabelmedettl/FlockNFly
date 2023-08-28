@@ -57,7 +57,7 @@ void AFlockingBrain::Tick(float DeltaTime)
 		bHasAssignedBoids = true;
 	}
 	
-	CalculateSteerForce();
+	//CalculateSteerForce();
 
 	for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
 	{
@@ -201,7 +201,7 @@ namespace EntityFlockingFuncs
 	}
 
 	/** Calculates entities position to correspond with average alignment of nearby entities, taking the position of entities within certain radius and steers entity towards the average position of those entites*/
-	FVector CalculateCohesionForce(int Counter, FVector &CenterOfMass, const FVector &Location) //totalcohesionforce kan vara const, gör kopia på den och skicka tillbaka den
+	FVector CalculateCohesionForce(int Counter,  FVector &CenterOfMass, const FVector &Location) //totalcohesionforce kan vara const, gör kopia på den och skicka tillbaka den, bool/void istället
 	{
 		if (Counter > 0)
 		{
@@ -212,19 +212,78 @@ namespace EntityFlockingFuncs
 		}
 		return FVector::ZeroVector;
 	}
+
+	/** Attempts to match the velocity of other entities inside this entity´s visible range by adding neighbours velocity to computation vector*/
+	FVector CalculateAlignmentForce(int Counter, FVector &TotalAlignmentForce)
+	{
+		if (Counter > 0)
+		{
+			TotalAlignmentForce /= Counter;
+			TotalAlignmentForce.Normalize();
+			return TotalAlignmentForce;
+		}
+		return FVector::ZeroVector;
+	}
+
 }
 
 
-void AFlockingBrain::CalculateSteerForce()
+FVector AFlockingBrain::CalculateSteerForce(int Index) // skicka in index på den datan som behandlas. loopa en loop, set 
 {
 	int SeparationCounter = 0;
 	int CohesionCounter = 0;
+	int AlignmentCounter = 0;
 	FVector TotalSeparationForce = FVector::ZeroVector;
-	FVector TotalCohesionForce = FVector::ZeroVector;
+	//FVector TotalCohesionForce = FVector::ZeroVector;
 	FVector CenterOfMass = FVector::ZeroVector;
 	FVector CurrentSeekForce = FVector::ZeroVector;
 	FVector TotalForce = FVector::ZeroVector;;
 
+	ensure(Entities[Index] != nullptr);
+		
+	EntitiesFlockingData[Index].TargetLocation = EntityTargetLocation;
+	CurrentSeekForce = EntityFlockingFuncs::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[i].MaxSpeed, EntitiesFlockingData[i].MaxForce);
+	Entities[Index]->UpdateSteerForce(CurrentSeekForce);
+	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
+	{
+		ensure(Entities[Index]->FlockingActorData != nullptr);
+		if (EntitiesFlockingData[Index].ID != EntitiesFlockingData[i].ID)
+		{
+			float Distance = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location).Length();
+			if (Distance < DesiredSeparationRadius * 2) 
+			{
+				TotalSeparationForce += EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location;
+				SeparationCounter++;
+			}
+			if (Distance < DesiredCohesionRadius * 2 && Distance > DesiredSeparationRadius * 2 )
+			{
+				Cohesion += EntitiesFlockingData[Index].Location;
+				CohesionCounter++;
+			}
+			if (Distance < DesiredAlignmentRadius * 2 )
+			{
+				Alignment += EntitiesFlockingData[i].Velocity;
+				AlignmentCounter++;
+			}
+		}
+	}
+
+	Separation = EntityFlockingFuncs::CalculateSeparationForce(SeparationCounter, TotalSeparationForce); // spara ner i strukten
+	Separation *= SeparationWeight;
+
+	Cohesion = EntityFlockingFuncs::CalculateCohesionForce(CohesionCounter, CenterOfMass, EntitiesFlockingData[Index].Location); // skicka ref till total cohesion force
+	Cohesion *= CohesionWeight;
+
+	Alignment = EntityFlockingFuncs::CalculateAlignmentForce(AlignmentCounter,Alignment);
+	Alignment *= AlignmentWeight;
+
+		
+	TotalForce += CurrentSeekForce + Separation * 10 + Cohesion + Alignment * 10;
+	Separation = FVector::ZeroVector;
+	return TotalForce;
+	
+
+	/*
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
 		ensure(Entities[i] != nullptr);
@@ -249,6 +308,11 @@ void AFlockingBrain::CalculateSteerForce()
 					Cohesion += EntitiesFlockingData[j].Location;
 					CohesionCounter++;
 				}
+				if (Distance < DesiredAlignmentRadius * 2 )
+				{
+					Alignment += EntitiesFlockingData[i].Velocity;
+					AlignmentCounter++;
+				}
 			}
 		}
 
@@ -256,37 +320,31 @@ void AFlockingBrain::CalculateSteerForce()
 		Separation = EntityFlockingFuncs::CalculateSeparationForce(SeparationCounter, TotalSeparationForce); // spara ner i strukten
 		Separation *= SeparationWeight;
 
-		Cohesion = EntityFlockingFuncs::CalculateCohesionForce(CohesionCounter, CenterOfMass, EntitiesFlockingData[i].Location);
+		Cohesion = EntityFlockingFuncs::CalculateCohesionForce(CohesionCounter, CenterOfMass, EntitiesFlockingData[i].Location); // skicka ref till total cohesion force
 		Cohesion *= CohesionWeight;
 
+		Alignment = EntityFlockingFuncs::CalculateAlignmentForce(AlignmentCounter,Alignment);
+		Alignment *= AlignmentWeight;
+
 		
-		TotalForce += CurrentSeekForce + Separation * 10 + Cohesion * 10;
+		TotalForce += CurrentSeekForce + Separation * 10 + Cohesion + Alignment * 10;
+
+		// 
 		Entities[i]->UpdateSteerForce(TotalForce); // uppdateringen kan göras hos actorn, inte
 		
 
-		/*
-		if (CohesionCounter > 0)
-		{
-			//EntitiesFlockingData[i].SteerForce += Separation * 300.f;
-			DrawDebugLine(GetWorld(), EntitiesFlockingData[i].Location, EntitiesFlockingData[i].Location + EntitiesFlockingData[i].Velocity, FColor::Purple, false, 0.1f, 0, 10);
-			//DrawDebugSphere(GetWorld(), CenterOfMass /= CohesionCounter, 30.f, 30, FColor::Green, false, 0.5f);
-		}
-		else
-		{
-			DrawDebugLine(GetWorld(), EntitiesFlockingData[i].Location, EntitiesFlockingData[i].Location + EntitiesFlockingData[i].Velocity, FColor::Red, false, 0.1f, 0, 10);
 
-		}
-		*/
-		
-		
+	
 		
 		
 		Separation = FVector::ZeroVector;
 		//Cohesion = FVector::ZeroVector;
 
-		
+	
 	}
+	*/
 }
+
 
 void AFlockingBrain::OnDebug(FVector &Location) const
 {
@@ -316,3 +374,84 @@ void AFlockingBrain::OnDebugLine(FVector &FromLocation, FVector &ToLocation) con
 
 
 
+/*int SeparationCounter = 0;
+	int CohesionCounter = 0;
+	int AlignmentCounter = 0;
+	FVector TotalSeparationForce = FVector::ZeroVector;
+	//FVector TotalCohesionForce = FVector::ZeroVector;
+	FVector CenterOfMass = FVector::ZeroVector;
+	FVector CurrentSeekForce = FVector::ZeroVector;
+	FVector TotalForce = FVector::ZeroVector;;
+
+	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
+	{
+		ensure(Entities[i] != nullptr);
+		
+		EntitiesFlockingData[i].TargetLocation = EntityTargetLocation;
+		CurrentSeekForce = EntityFlockingFuncs::CalculateSeekForce(EntitiesFlockingData[i].TargetLocation, EntitiesFlockingData[i].Location, EntitiesFlockingData[i].Velocity, EntitiesFlockingData[i].MaxSpeed, EntitiesFlockingData[i].MaxForce);
+		Entities[i]->UpdateSteerForce(CurrentSeekForce);
+		
+		for (int j = 0; j < EntitiesFlockingData.Num(); j++)
+		{
+			ensure(Entities[i]->FlockingActorData != nullptr);
+			if (EntitiesFlockingData[i].ID != EntitiesFlockingData[j].ID)
+			{
+				float Distance = (EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location).Length();
+				if (Distance < DesiredSeparationRadius * 2) 
+				{
+					TotalSeparationForce += EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location;
+					SeparationCounter++;
+				}
+				if (Distance < DesiredCohesionRadius * 2 && Distance > DesiredSeparationRadius * 2 )
+				{
+					Cohesion += EntitiesFlockingData[j].Location;
+					CohesionCounter++;
+				}
+				if (Distance < DesiredAlignmentRadius * 2 )
+				{
+					Alignment += EntitiesFlockingData[i].Velocity;
+					AlignmentCounter++;
+				}
+			}
+		}
+
+		
+		Separation = EntityFlockingFuncs::CalculateSeparationForce(SeparationCounter, TotalSeparationForce); // spara ner i strukten
+		Separation *= SeparationWeight;
+
+		Cohesion = EntityFlockingFuncs::CalculateCohesionForce(CohesionCounter, CenterOfMass, EntitiesFlockingData[i].Location); // skicka ref till total cohesion force
+		Cohesion *= CohesionWeight;
+
+		Alignment = EntityFlockingFuncs::CalculateAlignmentForce(AlignmentCounter,Alignment);
+		Alignment *= AlignmentWeight;
+
+		
+		TotalForce += CurrentSeekForce + Separation * 10 + Cohesion + Alignment * 10;
+
+		// 
+		Entities[i]->UpdateSteerForce(TotalForce); // uppdateringen kan göras hos actorn, inte
+		
+
+
+
+		
+		
+		Separation = FVector::ZeroVector;
+		//Cohesion = FVector::ZeroVector;
+*/
+
+/*
+	if (AlignmentCounter > 0)
+	{
+		//EntitiesFlockingData[i].SteerForce += Separation * 300.f;
+		DrawDebugLine(GetWorld(), EntitiesFlockingData[i].Location, EntitiesFlockingData[i].Location + EntitiesFlockingData[i].Velocity, FColor::Purple, false, 0.1f, 0, 10);
+		//DrawDebugSphere(GetWorld(), CenterOfMass /= CohesionCounter, 30.f, 30, FColor::Green, false, 0.5f);
+	}
+	else
+	{
+		DrawDebugLine(GetWorld(), EntitiesFlockingData[i].Location, EntitiesFlockingData[i].Location + EntitiesFlockingData[i].Velocity, FColor::Red, false, 0.1f, 0, 10);
+
+	}
+	
+	*/
+		

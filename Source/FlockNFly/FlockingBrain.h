@@ -202,7 +202,10 @@ protected:
 	float Mass = 0.7f;
 
 	/** Loops through collection of entities and applies behaviors */
-	void CalculateSteerForce();
+	FVector CalculateSteerForce(int Index);
+
+	/** Calculates new location to set to entities, based on entities current velocity, mass and acceleration*/
+	//FVector CalculateNewPosition(int IndexOfData);
 
 	/** Target location toward which entities should steer to*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
