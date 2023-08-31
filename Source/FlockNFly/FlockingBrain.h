@@ -240,6 +240,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Flocking")
 	float DesiredAlignmentRadius = 300.f;
 
+	/** Distance to target when entities should slow down*/
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	float DesiredRadiusToTarget = 100.f;
 	
 	// =========== Flocking force vectors to apply to entities ============ //
 	

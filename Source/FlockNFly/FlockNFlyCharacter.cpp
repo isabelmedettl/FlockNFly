@@ -83,9 +83,16 @@ void AFlockNFlyCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFlockNFlyCharacter::Look);
+		EnhancedInputComponent->BindAction(SetTargetAction, ETriggerEvent::Triggered, this, &AFlockNFlyCharacter::SetTargetLocation);
 
 	}
 
+}
+
+void AFlockNFlyCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
 }
 
 void AFlockNFlyCharacter::Move(const FInputActionValue& Value)
@@ -105,9 +112,11 @@ void AFlockNFlyCharacter::Move(const FInputActionValue& Value)
 		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
+
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
+		
 	}
 }
 
@@ -123,6 +132,13 @@ void AFlockNFlyCharacter::Look(const FInputActionValue& Value)
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
 }
+
+void AFlockNFlyCharacter::SetTargetLocation(const FInputActionValue& Value)
+{
+		
+}
+
+
 
 
 

@@ -181,16 +181,29 @@ void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
 	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].MaxSpeed);
 }
 
-namespace EntityFlockingFuncs 
-{
+namespace EntityFlockingFuncs
+{	
 	/** Calculates vector resulting from subtracting the desired position from the current position. The result is the appropriate velocity */
-	FVector CalculateSeekForce (FVector &CurrentTargetLocation, FVector &EntityLocation, FVector &EntityVelocity, const float EntityMaxSpeed, const float EntityMaxForce)
+	FVector CalculateSeekForce (FVector &CurrentTargetLocation, FVector &EntityLocation, FVector &EntityVelocity, const float EntityMaxSpeed, const float EntityMaxForce, const float DesiredRadiusToTarget)
 	{
-		const FVector Desired = (CurrentTargetLocation - EntityLocation).GetSafeNormal() * EntityMaxSpeed; 
-		FVector NewSteeringForce = Desired - EntityVelocity;
-		NewSteeringForce /= EntityMaxSpeed;
-		NewSteeringForce *= EntityMaxForce;
-	
+		const FVector Distance = CurrentTargetLocation - EntityLocation;
+		FVector NewSteeringForce;
+
+		if (Distance.Length() >= DesiredRadiusToTarget)
+		{
+			const FVector Desired = (Distance).GetSafeNormal() * EntityMaxSpeed; 
+			NewSteeringForce = Desired - EntityVelocity;
+			NewSteeringForce /= EntityMaxSpeed;
+			NewSteeringForce *= EntityMaxForce;
+		
+		}
+		else
+		{
+			const FVector Desired = (Distance).GetSafeNormal() * EntityMaxSpeed * (Distance.Length() / DesiredRadiusToTarget); 
+			NewSteeringForce = Desired - EntityVelocity;
+			
+		}
+			
 		return NewSteeringForce;
 	}
 
@@ -235,7 +248,7 @@ namespace EntityFlockingFuncs
 }
 
 
-FVector AFlockingBrain::CalculateSteerForce(const int Index) // skicka in index på den datan som behandlas. loopa en loop, set 
+FVector AFlockingBrain::CalculateSteerForce(const int Index)
 {
 	int SeparationCounter = 0;
 	int CohesionCounter = 0;
@@ -249,7 +262,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index) // skicka in index 
 	ensure(Entities[Index] != nullptr);
 		
 	EntitiesFlockingData[Index].TargetLocation = EntityTargetLocation;
-	CurrentSeekForce = EntityFlockingFuncs::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce);
+	CurrentSeekForce = EntityFlockingFuncs::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredRadiusToTarget);
 	Entities[Index]->UpdateSteerForce(CurrentSeekForce);
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
@@ -292,66 +305,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index) // skicka in index 
 	return TotalForce;
 	
 
-	/*
-	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
-	{
-		ensure(Entities[i] != nullptr);
-		
-		EntitiesFlockingData[i].TargetLocation = EntityTargetLocation;
-		CurrentSeekForce = EntityFlockingFuncs::CalculateSeekForce(EntitiesFlockingData[i].TargetLocation, EntitiesFlockingData[i].Location, EntitiesFlockingData[i].Velocity, EntitiesFlockingData[i].MaxSpeed, EntitiesFlockingData[i].MaxForce);
-		Entities[i]->UpdateSteerForce(CurrentSeekForce);
-		
-		for (int j = 0; j < EntitiesFlockingData.Num(); j++)
-		{
-			ensure(Entities[i]->FlockingActorData != nullptr);
-			if (EntitiesFlockingData[i].ID != EntitiesFlockingData[j].ID)
-			{
-				float Distance = (EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location).Length();
-				if (Distance < DesiredSeparationRadius * 2) 
-				{
-					TotalSeparationForce += EntitiesFlockingData[j].Location - EntitiesFlockingData[i].Location;
-					SeparationCounter++;
-				}
-				if (Distance < DesiredCohesionRadius * 2 && Distance > DesiredSeparationRadius * 2 )
-				{
-					Cohesion += EntitiesFlockingData[j].Location;
-					CohesionCounter++;
-				}
-				if (Distance < DesiredAlignmentRadius * 2 )
-				{
-					Alignment += EntitiesFlockingData[i].Velocity;
-					AlignmentCounter++;
-				}
-			}
-		}
-
-		
-		Separation = EntityFlockingFuncs::CalculateSeparationForce(SeparationCounter, TotalSeparationForce); // spara ner i strukten
-		Separation *= SeparationWeight;
-
-		Cohesion = EntityFlockingFuncs::CalculateCohesionForce(CohesionCounter, CenterOfMass, EntitiesFlockingData[i].Location); // skicka ref till total cohesion force
-		Cohesion *= CohesionWeight;
-
-		Alignment = EntityFlockingFuncs::CalculateAlignmentForce(AlignmentCounter,Alignment);
-		Alignment *= AlignmentWeight;
-
-		
-		TotalForce += CurrentSeekForce + Separation * 10 + Cohesion + Alignment * 10;
-
-		// 
-		Entities[i]->UpdateSteerForce(TotalForce); // uppdateringen kan göras hos actorn, inte
-		
-
-
 	
-		
-		
-		Separation = FVector::ZeroVector;
-		//Cohesion = FVector::ZeroVector;
-
-	
-	}
-	*/
 }
 
 

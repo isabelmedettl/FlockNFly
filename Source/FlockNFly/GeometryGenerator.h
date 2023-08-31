@@ -17,6 +17,8 @@ struct FGrid
 		GridX = 0.f;
 		GridY = 0.f;
 		GridZ = 0.f;
+
+		
 	}
 
 	UPROPERTY(EditAnywhere, Category="Grid")
@@ -28,7 +30,7 @@ struct FGrid
 	UPROPERTY(EditAnywhere, Category="Grid")
 	int GridZ = 0.f;
 	
-	TArray<TArray<TArray<int>>> IntGrid = TArray<TArray<TArray<int>>>();
+	TArray<TArray<TBitArray<>>> BitGrid = TArray<TArray<TBitArray<>>>();
 
 };
 
@@ -65,5 +67,9 @@ private:
 	TArray<uint8> ConvertSeedToBit();
 
 	void GenerateGrid();
+
+	void SmoothMap();
+
+	int NeighbourhoodCount();
 
 };

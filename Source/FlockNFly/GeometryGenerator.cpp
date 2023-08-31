@@ -19,6 +19,8 @@ void AGeometryGenerator::BeginPlay()
 
 	BitArray = ConvertSeedToBit();
 	GenerateGrid();
+
+	
 	
 }
 
@@ -26,21 +28,25 @@ void AGeometryGenerator::BeginPlay()
 void AGeometryGenerator::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	
 	
 	//UE_LOG(LogTemp, Warning, TEXT("bit ,%s"), *NewSeed);
 }
 
 TArray<uint8> AGeometryGenerator::ConvertSeedToBit()
 {
+	
 	TArray<uint8> BinaryString;
 
 	for (uint64 x = 0; x < Seed.Len(); ++x)
 	{
 		uint8 ASCIIvalue = static_cast<uint8>(Seed[x]);
 		BinaryString.Add(ASCIIvalue);
-		
 	}
+	
 	return BinaryString;
+	
 }
 
 namespace BitFuncs
@@ -51,21 +57,49 @@ namespace BitFuncs
 		int Byte = IntArray[BitIndex];
 		return Byte >> (Index % 8) & 1U; 
 	}
+
+	// bestämma thresholds för hur många bits value som ska räknas in i x, y och z
+	//när bit 1, de närmast thresholds värde avgör x y z värde på meshar
+	// sen threshold hur många som måste bli 0 efter
 	
 }
 
 void AGeometryGenerator::GenerateGrid()
 {
+
+	if (Grid.BitGrid.Num() <=0)
+	{
+		Grid.BitGrid.SetNum(Grid.GridX);
+		for (int x = 0; x < Grid.GridX; ++x)
+		{
+			Grid.BitGrid[x].SetNum(Grid.GridY);
+			for (int y = 0; y <Grid.GridY; ++y)
+			{
+				Grid.BitGrid[x][y].SetNumUninitialized(Grid.GridZ);
+			}
+		}
+	}
+	
+	
 	for (int x = 0; x < Grid.GridX; x++)
 	{
 		for (int y = 0; y <Grid.GridY; y++)
 		{
 			for (int z = 0; z < Grid.GridZ; z++)
 			{
-				Grid.IntGrid[x][y][z] = BitFuncs::GetBitValueAtIndex(BitArray, x + y + z);
-				UE_LOG(LogTemp, Warning, TEXT("bit ,%ull"), Grid.IntGrid[x][y][z]);
+				Grid.BitGrid[x][y][z] = BitFuncs::GetBitValueAtIndex(BitArray, x + y + z) == 1;
+				UE_LOG(LogTemp, Warning, TEXT("bit ,%u"), (bool) Grid.BitGrid[x][y][z]);
 			}
 		}
 	}
 }
 
+void AGeometryGenerator::SmoothMap()
+{
+	
+}
+
+int AGeometryGenerator::NeighbourhoodCount()
+{
+	return 0;
+}
