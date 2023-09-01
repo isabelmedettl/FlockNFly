@@ -135,7 +135,7 @@ void AFlockNFlyCharacter::Look(const FInputActionValue& Value)
 
 void AFlockNFlyCharacter::SetTargetLocation(const FInputActionValue& Value)
 {
-		
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("mouse left clicked")));
 }
 
 

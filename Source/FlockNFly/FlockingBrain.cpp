@@ -47,7 +47,7 @@ void AFlockingBrain::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	EntityTargetLocation = PlayerCharacter->GetActorLocation() + FVector::ForwardVector * PreferredDistanceToTarget;
+	EntityTargetLocation = PlayerCharacter->CurrentTargetLocation;
 	if (!bHasAssignedBoids)
 	{
 		for (int i = 0; i < EntitiesFlockingData.Num(); i++)

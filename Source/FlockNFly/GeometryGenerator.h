@@ -58,14 +58,19 @@ public:
 	FGrid Grid;
 	
 private:
+
+	/** Seed to procedural generation, deciding how noise is generated*/
 	FString Seed = "u45on30b56qewiurq34qv934e";
 
 	
 
+	/** Array to store seed translation into bits*/
 	TArray<uint8> BitArray = TArray<uint8>();
 
+	/** Converts Fstring seed to and array of unsigned ints, aka a bit array*/
 	TArray<uint8> ConvertSeedToBit();
 
+	/** Calculates and generates a 3d grid of bit values*/
 	void GenerateGrid();
 
 	void SmoothMap();
