@@ -48,6 +48,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector CurrentTargetLocation;
 	
+	
 	FHitResult TraceHitResult;
 
 	virtual void Tick(float DeltaSeconds) override;

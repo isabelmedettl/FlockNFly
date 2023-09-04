@@ -40,7 +40,7 @@ public:
 	/** Sets steering force to specified force
 	 * @param Force vector to set steer force to
 	 */
-	void UpdateSteerForce(const FVector &Force);
+	void UpdateSteerForce(const FVector &Force) const;
 
 	/** Sets new location of actor*/
 	void UpdateLocation(float DeltaTime);

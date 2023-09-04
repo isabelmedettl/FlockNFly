@@ -174,17 +174,25 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int ID)
 	
 }
 
-void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
-{
-	EntitiesFlockingData[IndexOfData].Acceleration = EntitiesFlockingData[IndexOfData].SteerForce / EntitiesFlockingData[IndexOfData].Mass;
-	EntitiesFlockingData[IndexOfData].Velocity += EntitiesFlockingData[IndexOfData].Acceleration;
-	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].MaxSpeed);
-}
 
 namespace EntityFlockingFuncs
-{	
+{
+
+	/** Calculates speed depending on how close entity is to current target location*/
+	float CalculateSpeed(const FVector &CurrentTargetLocation, const FVector &EntityLocation, const float EntityMaxSpeed, const float DesiredRadiusToTarget)
+	{
+		const FVector Distance = CurrentTargetLocation - EntityLocation;
+		if (Distance.Length() <= DesiredRadiusToTarget)
+		{
+			const float RampedSpeed = EntityMaxSpeed * (Distance.Length() / DesiredRadiusToTarget);
+			const float ClippedSpeed = FMath::Min(RampedSpeed, EntityMaxSpeed);
+			return ClippedSpeed;
+		}
+		return EntityMaxSpeed;
+	}
+	
 	/** Calculates vector resulting from subtracting the desired position from the current position. The result is the appropriate velocity */
-	FVector CalculateSeekForce (FVector &CurrentTargetLocation, FVector &EntityLocation, FVector &EntityVelocity, const float EntityMaxSpeed, const float EntityMaxForce, const float DesiredRadiusToTarget)
+	FVector CalculateSeekForce (const FVector &CurrentTargetLocation, const FVector &EntityLocation, const FVector &EntityVelocity, const float EntityMaxSpeed, const float EntityMaxForce, const float DesiredRadiusToTarget)
 	{
 		const FVector Distance = CurrentTargetLocation - EntityLocation;
 		FVector NewSteeringForce;
@@ -199,9 +207,16 @@ namespace EntityFlockingFuncs
 		}
 		else
 		{
-			const FVector Desired = (Distance).GetSafeNormal() * EntityMaxSpeed * (Distance.Length() / DesiredRadiusToTarget); 
+			float RampedSpeed = EntityMaxSpeed * (Distance.Length() / DesiredRadiusToTarget);
+			float ClippedSpeed = FMath::Min(RampedSpeed, EntityMaxSpeed);
+			
+			const FVector Desired = (Distance).GetSafeNormal() * ClippedSpeed ; 
 			NewSteeringForce = Desired - EntityVelocity;
 			
+		
+			
+			//const FVector Desired = (Distance).GetSafeNormal() * (Distance.Length() / DesiredRadiusToTarget); 
+			//NewSteeringForce = Desired - EntityVelocity;
 		}
 			
 		return NewSteeringForce;
@@ -245,6 +260,15 @@ namespace EntityFlockingFuncs
 		return FVector::ZeroVector;
 	}
 
+}
+
+
+void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
+{
+	EntitiesFlockingData[IndexOfData].MaxSpeed = EntityFlockingFuncs::CalculateSpeed(EntitiesFlockingData[IndexOfData].TargetLocation, EntitiesFlockingData[IndexOfData].Location, EntitiesFlockingData[IndexOfData].MaxSpeed, DesiredRadiusToTarget);
+	EntitiesFlockingData[IndexOfData].Acceleration = EntitiesFlockingData[IndexOfData].SteerForce / EntitiesFlockingData[IndexOfData].Mass;
+	EntitiesFlockingData[IndexOfData].Velocity += EntitiesFlockingData[IndexOfData].Acceleration;
+	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].MaxSpeed);
 }
 
 
@@ -298,13 +322,13 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 	Alignment *= AlignmentWeight;
 
 		
-	TotalForce += CurrentSeekForce + Separation * 10 + Cohesion + Alignment * 10;
+	TotalForce += CurrentSeekForce + Separation * 20 + Cohesion + Alignment * 10;
 	Separation = FVector::ZeroVector;
-	Cohesion = FVector::ZeroVector;
-	Alignment = FVector::ZeroVector;
+
+
 	return TotalForce;
 	
-
+	
 	
 }
 
