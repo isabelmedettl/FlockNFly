@@ -3,13 +3,23 @@
 
 #include "GeometryGenerator.h"
 
+#include "Components/BoxComponent.h"
+
 // Sets default values
 AGeometryGenerator::AGeometryGenerator()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	WorldBounds = CreateDefaultSubobject<UBoxComponent>("World Bounds");
+	WorldBounds->SetupAttachment(RootComponent);
 
+	Size = WorldBounds->GetComponentTransform().GetScale3D();
+	UE_LOG(LogTemp, Warning, TEXT("bit ,%f, %f, %f"), Size.X, Size.Y, Size.Z);
+
+
+	RandomStream = FRandomStream(IntSeed);
+	
 }
 
 // Called when the game starts or when spawned
@@ -20,8 +30,8 @@ void AGeometryGenerator::BeginPlay()
 	BitArray = ConvertSeedToBit();
 	GenerateGrid();
 
-	
-	
+	GenerateRooms();
+
 }
 
 // Called every frame
@@ -32,6 +42,23 @@ void AGeometryGenerator::Tick(float DeltaTime)
 	
 	
 	//UE_LOG(LogTemp, Warning, TEXT("bit ,%s"), *NewSeed);
+}
+
+bool AGeometryGenerator::IsWithinWorldBounds(FVector &Location)
+{
+	if (WorldBounds)
+	{
+		FVector BoxMin =WorldBounds->Bounds.Origin - WorldBounds->Bounds.BoxExtent;
+		FVector BoxMax = WorldBounds->Bounds.Origin + WorldBounds->Bounds.BoxExtent;
+    
+		bool bIsWithinBounds = Location.X >= BoxMin.X && Location.X <= BoxMax.X
+			&& Location.Y >= BoxMin.Y && Location.Y <= BoxMax.Y
+			&& Location.Z >= BoxMin.Z && Location.Z <= BoxMax.Z;
+		
+		return bIsWithinBounds;
+	}
+
+	return false;
 }
 
 TArray<uint8> AGeometryGenerator::ConvertSeedToBit()
@@ -47,6 +74,14 @@ TArray<uint8> AGeometryGenerator::ConvertSeedToBit()
 	
 	return BinaryString;
 	
+}
+
+void AGeometryGenerator::GenerateRooms()
+{
+	for (int i = 0;  i < NumberOfRooms; i ++)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("random ,%f"), RandomStream.FRand());
+	}
 }
 
 namespace BitFuncs
@@ -88,7 +123,7 @@ void AGeometryGenerator::GenerateGrid()
 			for (int z = 0; z < Grid.GridZ; z++)
 			{
 				Grid.BitGrid[x][y][z] = BitFuncs::GetBitValueAtIndex(BitArray, x + y + z) == 1;
-				UE_LOG(LogTemp, Warning, TEXT("bit ,%u"), (bool) Grid.BitGrid[x][y][z]);
+				//UE_LOG(LogTemp, Warning, TEXT("bit ,%u"), (bool) Grid.BitGrid[x][y][z]);
 			}
 		}
 	}

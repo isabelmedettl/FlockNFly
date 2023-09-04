@@ -7,6 +7,8 @@
 #include "GeometryGenerator.generated.h"
 
 
+class UBoxComponent;
+
 USTRUCT()
 struct FGrid
 {
@@ -35,6 +37,23 @@ struct FGrid
 };
 
 
+USTRUCT()
+struct FRoom
+{
+	GENERATED_BODY()
+
+	FRoom()
+	{
+		Location = FVector::ZeroVector;
+		Size = FVector::ZeroVector;
+	}
+
+	FVector Location;
+
+	FVector Size;
+};
+
+
 UCLASS()
 class FLOCKNFLY_API AGeometryGenerator : public AActor
 {
@@ -56,19 +75,39 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	FGrid Grid;
+
+	UPROPERTY(EditAnywhere)
+	int NumberOfRooms;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* WorldBounds;
+
+	UPROPERTY(EditAnywhere)
+	int32 IntSeed;
 	
 private:
+
+	FVector Size;
+
+	FRandomStream RandomStream;
+
+	/** Collection of room structs*/
+	TArray<FRoom> Rooms = TArray<FRoom>();
 
 	/** Seed to procedural generation, deciding how noise is generated*/
 	FString Seed = "u45on30b56qewiurq34qv934e";
 
-	
+	/** Function to check if a location is within the bounds and get the bounds*/
+	bool IsWithinWorldBounds(FVector &Location);
 
 	/** Array to store seed translation into bits*/
 	TArray<uint8> BitArray = TArray<uint8>();
 
 	/** Converts Fstring seed to and array of unsigned ints, aka a bit array*/
 	TArray<uint8> ConvertSeedToBit();
+
+	/** Converts seed to bit stream, and creates rooms*/
+	void GenerateRooms();
 
 	/** Calculates and generates a 3d grid of bit values*/
 	void GenerateGrid();
