@@ -1,7 +1,9 @@
 ﻿#pragma once
 
-class FF_PathFinder
+
+
+namespace FF_PathFinderFunctions
 {
-public:
+	// a*, find path, heap, grid
 	
-};
+}
