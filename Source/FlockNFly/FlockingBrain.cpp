@@ -212,11 +212,6 @@ namespace EntityFlockingFunctions
 			
 			const FVector Desired = (Distance).GetSafeNormal() * ClippedSpeed ; 
 			NewSteeringForce = Desired - EntityVelocity;
-			
-		
-			
-			//const FVector Desired = (Distance).GetSafeNormal() * (Distance.Length() / DesiredRadiusToTarget); 
-			//NewSteeringForce = Desired - EntityVelocity;
 		}
 		
 			
