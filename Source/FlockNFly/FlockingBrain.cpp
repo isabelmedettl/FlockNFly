@@ -304,7 +304,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 	Alignment *= AlignmentWeight;
 	
 	//TotalForce += CurrentSeekForce + Separation * 20 + Cohesion + Alignment;
-	TotalForce = CurrentSeekForce + Separation * 10;
+	TotalForce = CurrentSeekForce + Separation * SeparationMultiplyer;
 	Separation = FVector::ZeroVector;
 	
 	return TotalForce;

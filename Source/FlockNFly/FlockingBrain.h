@@ -179,19 +179,23 @@ protected:
 
 	/** Multiplyer for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int CohesionWeight = 1.2f;
+	int CohesionWeight = 1;
 
 	/** Multiplyer for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int SeekWeight = 1.f;
+	int SeekWeight = 1;
 	
 	/** Multiplyer for applying separation force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int SeparationWeight = 10.f;
+	int SeparationWeight = 10;
 
 	/** Multiplyer for applying alignment force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int AlignmentWeight = 1.2f;
+	int AlignmentWeight = 2;
+
+	/** Additional multiplyer for separation force when adding separation vector to steer force */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	int SeparationMultiplyer = 10;
 
 	/** Limits magnitude of velocity vector */
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
