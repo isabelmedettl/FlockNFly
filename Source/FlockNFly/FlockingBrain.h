@@ -29,6 +29,7 @@ struct FFlockingActorData
 		SeekForce = FVector::ZeroVector;
 		TargetLocation = FVector::ZeroVector;
 		MaxSpeed = -1.0f;
+		CurrentSpeed = -1.f;
 		MaxForce = -1.0f;
 		Mass = -1.0f;
 		ID = -1; 
@@ -66,6 +67,9 @@ struct FFlockingActorData
 
 	/** Limits magnitude of velocity vector */
 	float MaxSpeed = -1.0f;
+
+	/** Current speed of entity */
+	float CurrentSpeed = -1.0f;
 
 	/** Limits magnitude of acceleration vector */
 	float MaxForce = -1.0f;
@@ -183,7 +187,7 @@ protected:
 	
 	/** Multiplyer for applying separation force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int SeparationWeight = 3.f;
+	int SeparationWeight = 10.f;
 
 	/** Multiplyer for applying alignment force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
@@ -228,17 +232,10 @@ protected:
 	
 	
 	// =========== Flocking variables ============= //
-	/** Distance of field of vision for separation between entities */
-	UPROPERTY(EditAnywhere, Category="Flocking")
-	float DesiredSeparationRadius = 200.f;
 
-	/** Maximal distance of vision for calculating average position amongst neighbour entities and moving towards that point */
+	/** Maximal distance of vision for entity */
 	UPROPERTY(EditAnywhere, Category="Flocking")
-	float DesiredCohesionRadius = 300.f;
-
-	/** Distance of field of vision for calculating average velocity of nearby entities*/
-	UPROPERTY(EditAnywhere, Category="Flocking")
-	float DesiredAlignmentRadius = 300.f;
+	float DesiredVisionRadius = 300.f;
 
 	/** Distance to target when entities should slow down*/
 	UPROPERTY(EditAnywhere, Category="Flocking")
