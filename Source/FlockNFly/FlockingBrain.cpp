@@ -13,7 +13,10 @@ AFlockingBrain::AFlockingBrain()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
+
+
+	GridBox = CreateDefaultSubobject<UBoxComponent>("Box");
+	GridBox->SetBoxExtent(FVector(GridInfo.SizeX, GridInfo.SizeY, GridInfo.SizeZ));
 }
 
 // Called when the game starts or when spawned
@@ -36,7 +39,7 @@ void AFlockingBrain::BeginPlay()
 			SpawnBoids();
 		}
 	}
-
+	
 	// Start looping timer to update flocking entities behavior
 	//GetWorldTimerManager().SetTimer(ApplyBehaviorTimerHandle, this, &AFlockingBrain::CalculateSteerForce, ApplyBehaviorDelay, true,0.1f);
 	
@@ -273,7 +276,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 	FVector TotalSeparationForce = FVector::ZeroVector;
 	FVector CenterOfMass = FVector::ZeroVector;
 	FVector CurrentSeekForce = FVector::ZeroVector;
-	FVector TotalForce = FVector::ZeroVector;;
+	FVector TotalForce = FVector::ZeroVector;
 
 	ensure(Entities[Index] != nullptr);
 		
@@ -304,8 +307,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 	Alignment *= AlignmentWeight;
 	
 	//TotalForce += CurrentSeekForce + Separation * 20 + Cohesion + Alignment;
-	TotalForce = CurrentSeekForce + Separation * SeparationMultiplyer;
-	Separation = FVector::ZeroVector;
+	TotalForce = CurrentSeekForce + Cohesion + Alignment + Separation * SeparationMultiplyer;
 	
 	return TotalForce;
 }

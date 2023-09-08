@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FF_Grid.h"
 #include "FlockingBaseActor.h"
 #include "GameFramework/Actor.h"
 #include "FlockingBrain.generated.h"
@@ -195,7 +196,7 @@ protected:
 
 	/** Additional multiplyer for separation force when adding separation vector to steer force */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int SeparationMultiplyer = 10;
+	int SeparationMultiplyer = 5;
 
 	/** Limits magnitude of velocity vector */
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
@@ -258,5 +259,12 @@ protected:
 
 	/** Bool for checking if all entity actors has had their pointer to data struct set*/
 	bool bHasAssignedBoids = false;
+
+
+	// ========== Pathfinding ==============//
+	FFGrid GridInfo;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* GridBox;
 	
 };
