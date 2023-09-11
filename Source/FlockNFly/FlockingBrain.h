@@ -24,16 +24,14 @@ struct FFlockingActorData
 		Acceleration = FVector::ZeroVector;
 		SteerForce = FVector::ZeroVector;
 		Location = FVector::ZeroVector;
-		Separation = FVector::ZeroVector;
-		Cohesion = FVector::ZeroVector;
-		Alignment = FVector::ZeroVector;
-		SeekForce = FVector::ZeroVector;
 		TargetLocation = FVector::ZeroVector;
 		MaxSpeed = -1.0f;
 		CurrentSpeed = -1.f;
 		MaxForce = -1.0f;
 		Mass = -1.0f;
-		ID = -1; 
+		ID = -1;
+		bIsLeader = false;
+		
 	}
 	
 
@@ -48,20 +46,6 @@ struct FFlockingActorData
 
 	/** Current location of entity in world space */
 	FVector Location;
-	
-	/** Separation vector*/ 
-	FVector Separation = FVector::ZeroVector;
-	
-	/** Cohesion vector*/
-	FVector Cohesion = FVector::ZeroVector;
-
-	/** Alignment vector */
-	FVector Alignment = FVector::ZeroVector;
-
-	/** Force to seek target location*/
-	FVector SeekForce;
-
-	
 
 	/** Location or moving object in world space to which entity is steering towards*/
 	FVector TargetLocation = FVector::ZeroVector;
@@ -79,7 +63,10 @@ struct FFlockingActorData
 	float Mass = -1.0f;
 	
 	/** Unique number for idintification*/
-	int ID = -1; 
+	int ID = -1;
+
+	/** Flag for leader entity, aka the entity that is closest to current target location*/
+	bool bIsLeader;
 
 };
 
@@ -180,7 +167,7 @@ protected:
 
 	/** Multiplyer for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	int CohesionWeight = 1;
+	int CohesionWeight = 4;
 
 	/** Multiplyer for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
@@ -263,8 +250,18 @@ protected:
 
 	// ========== Pathfinding ==============//
 	FFGrid GridInfo;
+	//FVector TopLeft;
 
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* GridBox;
+	//UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	//UBoxComponent* GridBox;
+
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	int SizeX = 3000;
+	
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	int SizeY= 3000;
+
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	int SizeZ= 3000;
 	
 };
