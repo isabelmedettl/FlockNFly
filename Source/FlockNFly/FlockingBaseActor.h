@@ -11,6 +11,14 @@ class AFlockNFlyCharacter;
 struct FFlockingActorData;
 class AFlockingBrain;
 
+/**
+ *
+ * Ju närmare obsticle desto starkare färg
+ * Leader markeras med färg
+ * 
+ * 
+ */
+
 UCLASS()
 class FLOCKNFLY_API AFlockingBaseActor : public AActor
 {

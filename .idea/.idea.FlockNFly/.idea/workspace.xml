@@ -10,12 +10,8 @@
   <component name="ChangeListManager">
     <list default="true" id="7ffacc66-12e9-4a4a-8106-f84752647aa7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/3/YN/DX6T23DDL75Y3PFGZG2QM9.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/3/YN/DX6T23DDL75Y3PFGZG2QM9.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/6/HF/9H7TKAXH9DD8KI3TIXGI2I.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/6/HF/9H7TKAXH9DD8KI3TIXGI2I.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FF_Grid.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FF_Grid.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FF_PathFinder.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FF_PathFinder.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/8/H9/GITN2HJQNERMM41FAE68W0.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/8/H9/GITN2HJQNERMM41FAE68W0.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBaseActor.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -236,7 +232,8 @@
       <workItem from="1694255128699" duration="7971000" />
       <workItem from="1694264355473" duration="2117000" />
       <workItem from="1694355985296" duration="13927000" />
-      <workItem from="1694457447656" duration="4806000" />
+      <workItem from="1694457447656" duration="4845000" />
+      <workItem from="1694463526599" duration="742000" />
     </task>
     <servers />
   </component>
