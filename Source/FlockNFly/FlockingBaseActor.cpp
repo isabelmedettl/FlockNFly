@@ -40,6 +40,7 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 
 	ensure( FlockingActorData != nullptr);
 
+	FlockingActorData->DistanceToTarget = (FlockingActorData->TargetLocation - FlockingActorData->Location).Length(); // ska inte vara här
 	if (FlockingActorData->bIsLeader)
 	{
 		FlockingMeshComponent->SetMaterial(0, LeaderMaterial);

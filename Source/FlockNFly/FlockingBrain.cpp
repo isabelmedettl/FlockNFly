@@ -65,20 +65,25 @@ void AFlockingBrain::Tick(float DeltaTime)
 		bHasAssignedBoids = true;
 	}
 
-	float ClosestDistanceToPlayer = 10000000.f;
+	//float ClosestDistanceToPlayer = 10000000.f;
+	//int IndexOfLeader = 1;
 	for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
 	{
 		EntitiesFlockingData[i].bIsLeader = false;
-		const FVector Distance = EntityTargetLocation - EntitiesFlockingData[i].Location;
-		if (Distance.Length() < ClosestDistanceToPlayer /*&& HasClearViewOfTarget(EntitiesFlockingData[i].Location, i, Distance)*/)
-		{
-			ClosestDistanceToPlayer = Distance.Length();
-			EntitiesFlockingData[i].bIsLeader = true;
-		}
+		//const FVector Distance = EntityTargetLocation - EntitiesFlockingData[i].Location;
+		//if (Distance.Length() < ClosestDistanceToPlayer /*&& HasClearViewOfTarget(EntitiesFlockingData[i].Location, i, Distance)*/)
+		//{
+			//ClosestDistanceToPlayer = Distance.Length();
+			//EntitiesFlockingData[i].bIsLeader = true;
+		//}
 		
 		EntitiesFlockingData[i].SteerForce = CalculateSteerForce(i);
 		CalculateNewVelocity(i);
 		Entities[i]->UpdateLocation(DeltaTime);
+		if (EntitiesFlockingData[i].bIsLeader)
+		{
+			// Collision checks
+		}
 	}
 }
 
@@ -217,7 +222,7 @@ namespace EntityFlockingFunctions
 			NewSteeringForce *= EntityMaxForce;
 		}
 		
-		else
+		else // redundant kankse?? Testa
 		{
 			float RampedSpeed = EntityMaxSpeed * (Distance.Length() / DesiredRadiusToTarget);
 			float ClippedSpeed = FMath::Min(RampedSpeed, EntityMaxSpeed);
@@ -276,13 +281,24 @@ void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
 	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].CurrentSpeed);
 }
 
-bool AFlockingBrain::HasClearViewOfTarget(const FVector &EntityLocation, const int EntityIndex, const FVector &Direction)
+bool AFlockingBrain::IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const int EntityIndex, const FVector &Direction)
 {
 	// Calculate the angle between the actor's forward vector and the direction vector to the target
 	float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(Direction.GetSafeNormal(), Entities[EntityIndex]->GetActorForwardVector())));
 
+	/*
+	if (EntitiesFlockingData[EntityIndex].bIsLeader)
+	{
+		DrawDebugCone(GetWorld(), EntityLocation, Direction, Direction.Size(),
+		FMath::Acos(FVector::DotProduct(Direction.GetSafeNormal(), Entities[EntityIndex]->GetActorForwardVector())),
+		FMath::Acos(FVector::DotProduct(Direction.GetSafeNormal(), Entities[EntityIndex]->GetActorForwardVector())),
+		30, FColor::Red, false, 0.4, 0, 1 );
+	}
+	*/
+	
+
 	// Check if the target is within the specified angle and radius
-	if (AngleDegrees <= FieldOfViewAngle / 2 && Direction.Size() <= DesiredRadiusToTarget)
+	if (AngleDegrees <= AngleToView/ 2 && Direction.Size() <= DesiredRadiusToTarget )
 	{
 		return true;
 	}
@@ -304,6 +320,30 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 	
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
+		if (EntitiesFlockingData[Index].ID == EntitiesFlockingData[i].ID) { continue; }
+		const FVector DirectionToNeighbour = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location);
+
+		EntitiesFlockingData[Index].bIsLeader = (EntitiesFlockingData[i].DistanceToTarget >= EntitiesFlockingData[Index].DistanceToTarget) ? true : false;
+		EntitiesFlockingData[i].bIsLeader = (EntitiesFlockingData[i].DistanceToTarget >= EntitiesFlockingData[Index].DistanceToTarget) ? false : true;
+		if (EntitiesFlockingData[i].bIsLeader)
+		{
+			CurrentSeekForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
+		}
+		
+		Entities[i]->UpdateSteerForce(CurrentSeekForce);
+		ensure(Entities[Index]->FlockingActorData != nullptr);
+		
+		if (IsWithinFieldOfView(NeighbourFieldOfViewAngle, EntitiesFlockingData[Index].Location, Index, DirectionToNeighbour) /* narrow view to see neighbours to current target location*/)
+		{
+			if (DirectionToNeighbour.Length() < DesiredVisionRadius * 2) 
+			{
+				TotalSeparationForce += EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location;
+				Cohesion += EntitiesFlockingData[Index].Location;
+				Alignment += EntitiesFlockingData[i].Velocity;
+				Counter++;
+			}
+		}
+			/* SENAST SOM FUNKADE
 		if (EntitiesFlockingData[i].bIsLeader)
 		{
 			CurrentSeekForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
@@ -321,8 +361,9 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 			Alignment += EntitiesFlockingData[i].Velocity;
 			Counter++;
 		}
+			*/
 	}
-	
+	EntitiesFlockingData[Index].NumNeighbours = Counter;
 	Separation = EntityFlockingFunctions::CalculateSeparationForce(Counter, TotalSeparationForce); // spara ner i strukten
 	Separation *= SeparationWeight;
 

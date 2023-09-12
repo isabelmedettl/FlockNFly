@@ -21,6 +21,7 @@ struct FFlockingActorData
 	FFlockingActorData()
 	{
 		Velocity = FVector::ZeroVector;
+		DistanceToTarget = 0.f; //ersätt alla beräkningar på detta med variabeln, görs typ 20 ggr i onödan
 		Acceleration = FVector::ZeroVector;
 		SteerForce = FVector::ZeroVector;
 		Location = FVector::ZeroVector;
@@ -29,6 +30,8 @@ struct FFlockingActorData
 		CurrentSpeed = -1.f;
 		MaxForce = -1.0f;
 		Mass = -1.0f;
+		NumNeighbours = -1;
+		NumNeighboursTowardTarget = -1;
 		ID = -1;
 		bIsLeader = false;
 		
@@ -37,6 +40,9 @@ struct FFlockingActorData
 
 	/** Current velocity of entity*/
 	FVector Velocity;
+
+	/** Current distance to target location*/
+	float DistanceToTarget;
 
 	/** Current acceleration of entity*/
 	FVector Acceleration;
@@ -64,6 +70,12 @@ struct FFlockingActorData
 	
 	/** Unique number for idintification*/
 	int ID = -1;
+
+	/** Number of neighbours, aka other entities withing field of view of entity*/
+	int NumNeighbours = -1;
+
+	/** Number of neighbours, aka other entities withing field of view of entity when looking at target*/
+	int NumNeighboursTowardTarget =-1;
 
 	/** Flag for leader entity, aka the entity that is closest to current target location*/
 	bool bIsLeader;
@@ -203,8 +215,8 @@ protected:
 	/** Calculates new location to set to entities, based on entities current velocity, mass and acceleration*/
 	void CalculateNewVelocity(const int IndexOfData);
 
-	/** Calculates flock leader, aka the entity closest to target that has none entites in its field of vision*/
-	bool HasClearViewOfTarget(const FVector &EntityLocation, const int EntityIndex, const FVector &Direction);
+	/** Checks if entity is in field of view of another entity*/
+	bool IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const int EntityIndex, const FVector &Direction);
 	
 	/** Target location toward which entities should steer to*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
@@ -241,7 +253,11 @@ protected:
 
 	/** Angle deciding the narrowness of entities field of vision*/
 	UPROPERTY(EditAnywhere, Category="Flocking")
-	float FieldOfViewAngle = 45.f;
+	float NeighbourFieldOfViewAngle = 270.f;
+
+	/** Angle deciding the narrowness of entities field of vision when looking at target*/
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	float TargetFieldOfViewAngle = 45.f;
 	
 	// =========== Flocking force vectors to apply to entities ============ //
 	
