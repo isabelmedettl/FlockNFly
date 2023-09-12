@@ -203,6 +203,9 @@ protected:
 	/** Calculates new location to set to entities, based on entities current velocity, mass and acceleration*/
 	void CalculateNewVelocity(const int IndexOfData);
 
+	/** Calculates flock leader, aka the entity closest to target that has none entites in its field of vision*/
+	bool HasClearViewOfTarget(const FVector &EntityLocation, const int EntityIndex, const FVector &Direction);
+	
 	/** Target location toward which entities should steer to*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
 	FVector EntityTargetLocation;
@@ -222,9 +225,8 @@ protected:
 	void OnDebugLine(FVector &FromLocation, FVector &ToLocation) const;
 
 	
-	
 	// =========== Flocking variables ============= //
-
+	
 	/** Maximal distance of vision for entity */
 	UPROPERTY(EditAnywhere, Category="Flocking")
 	float DesiredVisionRadius = 300.f;
@@ -232,6 +234,14 @@ protected:
 	/** Distance to target when entities should slow down*/
 	UPROPERTY(EditAnywhere, Category="Flocking")
 	float DesiredRadiusToTarget = 200.f;
+
+	/** Distance to target defining if entity has vision of target*/
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	float DesiredVisionRadiusToTarget = 300.f;
+
+	/** Angle deciding the narrowness of entities field of vision*/
+	UPROPERTY(EditAnywhere, Category="Flocking")
+	float FieldOfViewAngle = 45.f;
 	
 	// =========== Flocking force vectors to apply to entities ============ //
 	

@@ -68,16 +68,14 @@ void AFlockingBrain::Tick(float DeltaTime)
 	float ClosestDistanceToPlayer = 10000000.f;
 	for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
 	{
+		EntitiesFlockingData[i].bIsLeader = false;
 		const FVector Distance = EntityTargetLocation - EntitiesFlockingData[i].Location;
-		if (Distance.Length() < ClosestDistanceToPlayer)
+		if (Distance.Length() < ClosestDistanceToPlayer /*&& HasClearViewOfTarget(EntitiesFlockingData[i].Location, i, Distance)*/)
 		{
 			ClosestDistanceToPlayer = Distance.Length();
 			EntitiesFlockingData[i].bIsLeader = true;
 		}
-		else
-		{
-			EntitiesFlockingData[i].bIsLeader = false;
-		}
+		
 		EntitiesFlockingData[i].SteerForce = CalculateSteerForce(i);
 		CalculateNewVelocity(i);
 		Entities[i]->UpdateLocation(DeltaTime);
@@ -276,6 +274,19 @@ void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
 	EntitiesFlockingData[IndexOfData].Acceleration = EntitiesFlockingData[IndexOfData].SteerForce / EntitiesFlockingData[IndexOfData].Mass;
 	EntitiesFlockingData[IndexOfData].Velocity += EntitiesFlockingData[IndexOfData].Acceleration;
 	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].CurrentSpeed);
+}
+
+bool AFlockingBrain::HasClearViewOfTarget(const FVector &EntityLocation, const int EntityIndex, const FVector &Direction)
+{
+	// Calculate the angle between the actor's forward vector and the direction vector to the target
+	float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(Direction.GetSafeNormal(), Entities[EntityIndex]->GetActorForwardVector())));
+
+	// Check if the target is within the specified angle and radius
+	if (AngleDegrees <= FieldOfViewAngle / 2 && Direction.Size() <= DesiredRadiusToTarget)
+	{
+		return true;
+	}
+	return false;
 }
 
 

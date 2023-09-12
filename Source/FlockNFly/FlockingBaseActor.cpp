@@ -42,9 +42,13 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 
 	if (FlockingActorData->bIsLeader)
 	{
-		//FlockingMeshComponent->SetMaterial(LeaderMaterial->GetLinkerIndex(), LeaderMaterial);
+		FlockingMeshComponent->SetMaterial(0, LeaderMaterial);
 	}
-	
+	else
+	{
+		FlockingMeshComponent->SetMaterial(0, BasicMaterial);
+
+	}
 }
 
 void AFlockingBaseActor::UpdateSteerForce(const FVector &Force) const // skicka ref = bra, gör ingen kopia.
