@@ -39,6 +39,11 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	ensure( FlockingActorData != nullptr);
+
+	if (FlockingActorData->bIsLeader)
+	{
+		//FlockingMeshComponent->SetMaterial(LeaderMaterial->GetLinkerIndex(), LeaderMaterial);
+	}
 	
 }
 

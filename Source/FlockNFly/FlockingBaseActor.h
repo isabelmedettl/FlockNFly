@@ -44,6 +44,12 @@ public:
 	/** Static mesh comp*/
 	UPROPERTY(EditAnywhere, Category="Collision")
 	USphereComponent* CollisionComponent;
+
+	UPROPERTY(EditAnywhere, Category="Mesh")
+	UMaterialInterface* BasicMaterial;
+
+	UPROPERTY(EditAnywhere, Category="Mesh")
+	UMaterialInterface* LeaderMaterial;
 			
 	/** Sets steering force to specified force
 	 * @param Force vector to set steer force to
