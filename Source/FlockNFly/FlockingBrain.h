@@ -21,7 +21,7 @@ struct FFlockingActorData
 	FFlockingActorData()
 	{
 		Velocity = FVector::ZeroVector;
-		DistanceToTarget = 0.f; //ersätt alla beräkningar på detta med variabeln, görs typ 20 ggr i onödan
+		DistanceToTarget = 0.f; //ersätt alla beräkningar på detta med variabeln, görs typ 20 ggr i onödan ALT Ändra till direction för det behövs typ mer??
 		Acceleration = FVector::ZeroVector;
 		SteerForce = FVector::ZeroVector;
 		Location = FVector::ZeroVector;
@@ -283,7 +283,7 @@ protected:
 	float TraceRadius = 10.f;
 
 	/** Calculates force to be added to avoid collision in path toward target location*/
-	FVector CalculateCollisionAvoidanceForce();
+	FVector CalculateCollisionAvoidanceForce(int Index);
 
 	/** Ref to colliding obstacle*/
 	FHitResult FoundObstacle;

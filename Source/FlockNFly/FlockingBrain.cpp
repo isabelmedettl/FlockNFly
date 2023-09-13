@@ -96,8 +96,6 @@ void AFlockingBrain::SpawnBoids()
 			Counter++;
 		}
 	}
-	
-	//DrawDebugSphere(GetWorld(), GridInfo.TopLeft, 50.f, 12, FColor::Green, true, 3, 0, 1);
 }
 
 
@@ -321,30 +319,41 @@ bool AFlockingBrain::CollisionOnPathToTarget(int Index)
 	TArray<AActor*> IgnoreActors = TArray<AActor*>();
 	IgnoreActors.Add(this);
 
+	const FVector Direction = (EntityTargetLocation - EntitiesFlockingData[Index].Location).GetSafeNormal();
+	const FVector TraceLocation = EntitiesFlockingData[Index].Location + Direction * DesiredVisionRadiusToTarget;
+	
 	bool bHit;
 	if (bDebug)
 	{
 		bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(GetWorld(), EntitiesFlockingData[Index].Location,
-		EntitiesFlockingData[Index].Location + DesiredVisionRadiusToTarget, TraceRadius , ObjectTypes, true, IgnoreActors, EDrawDebugTrace::ForDuration,
-		HitResult, true, FColor::Green, FLinearColor::Red,  0.2f);
+		TraceLocation, TraceRadius , ObjectTypes, true, IgnoreActors, EDrawDebugTrace::ForDuration,
+		HitResult, true, FColor::Green, FLinearColor::Red,  0.1f);
 	}
 	else
 	{
 		bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(GetWorld(), EntitiesFlockingData[Index].Location,
 		EntitiesFlockingData[Index].Location + DesiredVisionRadiusToTarget, TraceRadius , ObjectTypes, true, IgnoreActors, EDrawDebugTrace::None,
-		HitResult, true, FColor::Transparent, FLinearColor::Transparent,  0.2f);
+		HitResult, true, FColor::Transparent, FLinearColor::Transparent,  0.1f);
 	}
 	if (bHit)
 	{
 		FoundObstacle = HitResult;
+		//DrawDebugSphere(GetWorld(), TraceLocation, 50.f, 12, FColor::Blue, true, 0.1, 0, 1);
+
 		return true;
 	}
 	return false;
 	
 }
 
-FVector AFlockingBrain::CalculateCollisionAvoidanceForce()
+FVector AFlockingBrain::CalculateCollisionAvoidanceForce(int Index)
 {
+	// Difference between entities position and  obstacle's position
+	FVector Difference = FoundObstacle.Location - EntitiesFlockingData[Index].Location;
+	// Projection vector of difference and entities curr direction
+	FVector Projection  = FVector::DotProduct(Difference, EntitiesFlockingData[Index].Velocity) * EntitiesFlockingData[Index].Velocity; // direction
+	
+	
 	return FVector::ZeroVector;
 }
 
@@ -384,26 +393,6 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 				Counter++;
 			}
 		}
-		
-			/* SENAST SOM FUNKADE
-		if (EntitiesFlockingData[i].bIsLeader)
-		{
-			CurrentSeekForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
-		}
-		Entities[i]->UpdateSteerForce(CurrentSeekForce);
-		ensure(Entities[Index]->FlockingActorData != nullptr);
-		if (EntitiesFlockingData[Index].ID == EntitiesFlockingData[i].ID) { continue; }
-		float Distance = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location).Length();
-		//DrawDebugSphere(GetWorld(), EntitiesFlockingData[i].Location , DesiredVisionRadius, 40, FColor::Green, false, 0.5, 0, 1);
-
-		if (Distance < DesiredVisionRadius * 2) 
-		{
-			TotalSeparationForce += EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location;
-			Cohesion += EntitiesFlockingData[Index].Location;
-			Alignment += EntitiesFlockingData[i].Velocity;
-			Counter++;
-		}
-			*/
 	}
 	EntitiesFlockingData[Index].NumNeighbours = Counter;
 	Separation = EntityFlockingFunctions::CalculateSeparationForce(Counter, TotalSeparationForce); // spara ner i strukten
@@ -415,8 +404,6 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 	Alignment = EntityFlockingFunctions::CalculateAlignmentForce(Counter,Alignment);
 	Alignment *= AlignmentWeight;
 	
-	
-	//TotalForce += CurrentSeekForce + Separation * 20 + Cohesion + Alignment;
 	TotalForce = CurrentSeekForce + Cohesion + Alignment + Separation * SeparationMultiplyer;
 	
 	return TotalForce;
