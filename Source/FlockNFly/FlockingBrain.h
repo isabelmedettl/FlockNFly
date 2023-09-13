@@ -217,24 +217,20 @@ protected:
 
 	/** Checks if entity is in field of view of another entity*/
 	bool IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const int EntityIndex, const FVector &Direction);
+
+	/** Calculates which enitity is closest to target location, and makes that entity the leader*/
+	void CalculateLeader();
 	
 	/** Target location toward which entities should steer to*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
 	FVector EntityTargetLocation;
 
-	// ========= Debugging =============== //
-	/** Tick timer for debugging */
-	FTimerHandle DebugTimerHandle;
+	/** Timer handle for calculating leader*/
+	FTimerHandle CalculateLeaderTimerHandle;
 
-	/** Defines how often to draw debug shapes*/
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
-	float DrawDebugDelay = 2.f;
-
-	/** Method for debugging, for drawing variables in world space*/
-	void OnDebug(FVector &Location) const;
-
-	/** Method for debugging, draws line between two points */
-	void OnDebugLine(FVector &FromLocation, FVector &ToLocation) const;
+	/** Delay for calculating leader*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking", meta=(AllowPrivateAccess = true))
+	float CalculatingLeaderDelay = 0.5f;
 
 	
 	// =========== Flocking variables ============= //

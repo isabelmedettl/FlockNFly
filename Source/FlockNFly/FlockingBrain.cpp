@@ -15,8 +15,8 @@ AFlockingBrain::AFlockingBrain()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	FFGrid Grid = FFGrid();
-	GridInfo = Grid;
+	//FFGrid Grid = FFGrid();
+	//GridInfo = Grid;
 }
 
 // Called when the game starts or when spawned
@@ -40,11 +40,11 @@ void AFlockingBrain::BeginPlay()
 		}
 	}
 
-	GridInfo.SizeX = 3000;
-	GridInfo.SizeY = 3000;
-	GridInfo.SizeZ = 3000;
+	//GridInfo.SizeX = 3000;
+	//GridInfo.SizeY = 3000;
+	//GridInfo.SizeZ = 3000;
 
-	GridInfo.CalculateGrid(GetActorLocation(), 3000, 3000, 3000, 5);
+	//GridInfo.CalculateGrid(GetActorLocation(), 3000, 3000, 3000, 5);
 	//UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f"), GridInfo.TopLeft.X, GridInfo.TopLeft.Y, GridInfo.TopLeft.Z);
 
 	DistanceBetweenEntities = DesiredVisionRadius - 50.f;
@@ -69,7 +69,7 @@ void AFlockingBrain::Tick(float DeltaTime)
 	//int IndexOfLeader = 1;
 	for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
 	{
-		EntitiesFlockingData[i].bIsLeader = false;
+		//EntitiesFlockingData[i].bIsLeader = false;
 		//const FVector Distance = EntityTargetLocation - EntitiesFlockingData[i].Location;
 		//if (Distance.Length() < ClosestDistanceToPlayer /*&& HasClearViewOfTarget(EntitiesFlockingData[i].Location, i, Distance)*/)
 		//{
@@ -101,6 +101,7 @@ void AFlockingBrain::SpawnBoids()
 			Counter++;
 		}
 	}
+	
 	//DrawDebugSphere(GetWorld(), GridInfo.TopLeft, 50.f, 12, FColor::Green, true, 3, 0, 1);
 }
 
@@ -278,7 +279,7 @@ void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
 	EntitiesFlockingData[IndexOfData].CurrentSpeed = EntityFlockingFunctions::CalculateSpeed(EntitiesFlockingData[IndexOfData].TargetLocation, EntitiesFlockingData[IndexOfData].Location, EntitiesFlockingData[IndexOfData].MaxSpeed, DesiredVisionRadius);
 	EntitiesFlockingData[IndexOfData].Acceleration = EntitiesFlockingData[IndexOfData].SteerForce / EntitiesFlockingData[IndexOfData].Mass;
 	EntitiesFlockingData[IndexOfData].Velocity += EntitiesFlockingData[IndexOfData].Acceleration;
-	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].CurrentSpeed);
+	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].MaxSpeed);
 }
 
 bool AFlockingBrain::IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const int EntityIndex, const FVector &Direction)
@@ -305,6 +306,23 @@ bool AFlockingBrain::IsWithinFieldOfView(float AngleToView, const FVector &Entit
 	return false;
 }
 
+void AFlockingBrain::CalculateLeader()
+{
+	int Index = 0;
+	for (int i = 0; i < EntitiesFlockingData.Num() - 1; i++)
+	{
+		if (EntitiesFlockingData[i].DistanceToTarget < EntitiesFlockingData[i+1].DistanceToTarget)
+		{
+			Index = i;
+		}else
+		{
+			Index = i+1;
+		}
+	}
+
+	EntitiesFlockingData[Index].bIsLeader = true;
+}
+
 
 FVector AFlockingBrain::CalculateSteerForce(const int Index)
 {
@@ -323,8 +341,8 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 		if (EntitiesFlockingData[Index].ID == EntitiesFlockingData[i].ID) { continue; }
 		const FVector DirectionToNeighbour = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location);
 
-		EntitiesFlockingData[Index].bIsLeader = (EntitiesFlockingData[i].DistanceToTarget >= EntitiesFlockingData[Index].DistanceToTarget) ? true : false;
-		EntitiesFlockingData[i].bIsLeader = (EntitiesFlockingData[i].DistanceToTarget >= EntitiesFlockingData[Index].DistanceToTarget) ? false : true;
+		//EntitiesFlockingData[Index].bIsLeader = (EntitiesFlockingData[i].DistanceToTarget >= EntitiesFlockingData[Index].DistanceToTarget) ? true : false;
+		//EntitiesFlockingData[i].bIsLeader = (EntitiesFlockingData[i].DistanceToTarget >= EntitiesFlockingData[Index].DistanceToTarget) ? false : true;
 		if (EntitiesFlockingData[i].bIsLeader)
 		{
 			CurrentSeekForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
@@ -332,7 +350,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 		
 		Entities[i]->UpdateSteerForce(CurrentSeekForce);
 		ensure(Entities[Index]->FlockingActorData != nullptr);
-		
+
 		if (IsWithinFieldOfView(NeighbourFieldOfViewAngle, EntitiesFlockingData[Index].Location, Index, DirectionToNeighbour) /* narrow view to see neighbours to current target location*/)
 		{
 			if (DirectionToNeighbour.Length() < DesiredVisionRadius * 2) 
@@ -343,6 +361,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 				Counter++;
 			}
 		}
+		
 			/* SENAST SOM FUNKADE
 		if (EntitiesFlockingData[i].bIsLeader)
 		{
@@ -396,24 +415,5 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 
 
 
-
-
-
-
-
-void AFlockingBrain::OnDebug(FVector &Location) const
-{
-	//DrawDebugSphere(GetWorld(), CurrentTargetLocation, 30.f, 30, FColor::Black, false,0.2f);
-	//DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData.DesiredAlignmentRadius, 30, FColor::Red, false, 0.2f);
-	//DrawDebugSphere(GetWorld(), Location, 30.f, 30, FColor::Green, false, 0.01f);
-	//DrawDebugSphere(GetWorld(), GetActorLocation(), FlockingActorData->DesiredSeparationRadius, 30, FColor::Green, false, 0.2f);
-	
-
-}
-
-void AFlockingBrain::OnDebugLine(FVector &FromLocation, FVector &ToLocation) const
-{
-	//	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FlockingActorData.Velocity, FColor::Purple, false, 0.1f, 0, 10);
-}
 
 		
