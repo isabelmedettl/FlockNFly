@@ -48,6 +48,8 @@ void AFlockingBrain::BeginPlay()
 	//UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f"), GridInfo.TopLeft.X, GridInfo.TopLeft.Y, GridInfo.TopLeft.Z);
 
 	DistanceBetweenEntities = DesiredVisionRadius - 50.f;
+	
+	GetWorldTimerManager().SetTimer(CalculateLeaderTimerHandle, this, &AFlockingBrain::CalculateLeader, CalculatingLeaderDelay, true, 0.1f);
 }
 
 // Called every frame
@@ -64,25 +66,18 @@ void AFlockingBrain::Tick(float DeltaTime)
 		}
 		bHasAssignedBoids = true;
 	}
-
-	//float ClosestDistanceToPlayer = 10000000.f;
-	//int IndexOfLeader = 1;
+	
 	for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
 	{
-		//EntitiesFlockingData[i].bIsLeader = false;
-		//const FVector Distance = EntityTargetLocation - EntitiesFlockingData[i].Location;
-		//if (Distance.Length() < ClosestDistanceToPlayer /*&& HasClearViewOfTarget(EntitiesFlockingData[i].Location, i, Distance)*/)
-		//{
-			//ClosestDistanceToPlayer = Distance.Length();
-			//EntitiesFlockingData[i].bIsLeader = true;
-		//}
-		
 		EntitiesFlockingData[i].SteerForce = CalculateSteerForce(i);
 		CalculateNewVelocity(i);
 		Entities[i]->UpdateLocation(DeltaTime);
 		if (EntitiesFlockingData[i].bIsLeader)
 		{
-			// Collision checks
+			if (CollisionOnPathToTarget(i))
+			{
+				
+			}
 		}
 	}
 }
@@ -286,20 +281,9 @@ bool AFlockingBrain::IsWithinFieldOfView(float AngleToView, const FVector &Entit
 {
 	// Calculate the angle between the actor's forward vector and the direction vector to the target
 	float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(Direction.GetSafeNormal(), Entities[EntityIndex]->GetActorForwardVector())));
-
-	/*
-	if (EntitiesFlockingData[EntityIndex].bIsLeader)
-	{
-		DrawDebugCone(GetWorld(), EntityLocation, Direction, Direction.Size(),
-		FMath::Acos(FVector::DotProduct(Direction.GetSafeNormal(), Entities[EntityIndex]->GetActorForwardVector())),
-		FMath::Acos(FVector::DotProduct(Direction.GetSafeNormal(), Entities[EntityIndex]->GetActorForwardVector())),
-		30, FColor::Red, false, 0.4, 0, 1 );
-	}
-	*/
 	
-
 	// Check if the target is within the specified angle and radius
-	if (AngleDegrees <= AngleToView/ 2 && Direction.Size() <= DesiredRadiusToTarget )
+	if (AngleDegrees <= AngleToView/ 2 && Direction.Size() <= DesiredRadiusToTarget *2 )
 	{
 		return true;
 	}
@@ -314,13 +298,54 @@ void AFlockingBrain::CalculateLeader()
 		if (EntitiesFlockingData[i].DistanceToTarget < EntitiesFlockingData[i+1].DistanceToTarget)
 		{
 			Index = i;
+			EntitiesFlockingData[i +1].bIsLeader = false;
 		}else
 		{
 			Index = i+1;
+			EntitiesFlockingData[i].bIsLeader = false;
 		}
 	}
-
 	EntitiesFlockingData[Index].bIsLeader = true;
+}
+
+bool AFlockingBrain::CollisionOnPathToTarget(int Index)
+{
+	FHitResult HitResult;
+	FVector Origin, Extent;
+	GetActorBounds(true, Origin, Extent);
+	
+	// Define the object types to trace against
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
+
+	TArray<AActor*> IgnoreActors = TArray<AActor*>();
+	IgnoreActors.Add(this);
+
+	bool bHit;
+	if (bDebug)
+	{
+		bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(GetWorld(), EntitiesFlockingData[Index].Location,
+		EntitiesFlockingData[Index].Location + DesiredVisionRadiusToTarget, TraceRadius , ObjectTypes, true, IgnoreActors, EDrawDebugTrace::ForDuration,
+		HitResult, true, FColor::Green, FLinearColor::Red,  0.2f);
+	}
+	else
+	{
+		bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(GetWorld(), EntitiesFlockingData[Index].Location,
+		EntitiesFlockingData[Index].Location + DesiredVisionRadiusToTarget, TraceRadius , ObjectTypes, true, IgnoreActors, EDrawDebugTrace::None,
+		HitResult, true, FColor::Transparent, FLinearColor::Transparent,  0.2f);
+	}
+	if (bHit)
+	{
+		FoundObstacle = HitResult;
+		return true;
+	}
+	return false;
+	
+}
+
+FVector AFlockingBrain::CalculateCollisionAvoidanceForce()
+{
+	return FVector::ZeroVector;
 }
 
 
@@ -335,14 +360,10 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 	ensure(Entities[Index] != nullptr);
 		
 	EntitiesFlockingData[Index].TargetLocation = EntityTargetLocation;
-	
+		
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
-		if (EntitiesFlockingData[Index].ID == EntitiesFlockingData[i].ID) { continue; }
-		const FVector DirectionToNeighbour = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location);
-
-		//EntitiesFlockingData[Index].bIsLeader = (EntitiesFlockingData[i].DistanceToTarget >= EntitiesFlockingData[Index].DistanceToTarget) ? true : false;
-		//EntitiesFlockingData[i].bIsLeader = (EntitiesFlockingData[i].DistanceToTarget >= EntitiesFlockingData[Index].DistanceToTarget) ? false : true;
+		
 		if (EntitiesFlockingData[i].bIsLeader)
 		{
 			CurrentSeekForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
@@ -350,6 +371,8 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 		
 		Entities[i]->UpdateSteerForce(CurrentSeekForce);
 		ensure(Entities[Index]->FlockingActorData != nullptr);
+		if (EntitiesFlockingData[Index].ID == EntitiesFlockingData[i].ID) { continue; }
+		const FVector DirectionToNeighbour = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location);
 
 		if (IsWithinFieldOfView(NeighbourFieldOfViewAngle, EntitiesFlockingData[Index].Location, Index, DirectionToNeighbour) /* narrow view to see neighbours to current target location*/)
 		{

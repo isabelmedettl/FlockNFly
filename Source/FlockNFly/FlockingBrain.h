@@ -170,43 +170,36 @@ protected:
 
 	// ======= Weights and methods for flocking behaviors ========= //
 
-	/** Looping timer handle for applying specified behaviors on entities*/
-	FTimerHandle ApplyBehaviorTimerHandle;
-
-	/** Delay for how often to apply behaviors on entities, deciding how often to apply vector forces*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
-	double ApplyBehaviorDelay = 0.1f;
-
-	/** Multiplyer for applying cohesion force*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+		/** Multiplyer for applying cohesion force*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking", meta=(AllowPrivateAccess = true))
 	int CohesionWeight = 4;
 
 	/** Multiplyer for applying cohesion force*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking",meta=(AllowPrivateAccess = true))
 	int SeekWeight = 1;
 	
 	/** Multiplyer for applying separation force*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking",meta=(AllowPrivateAccess = true))
 	int SeparationWeight = 10;
 
 	/** Multiplyer for applying alignment force*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking", meta=(AllowPrivateAccess = true))
 	int AlignmentWeight = 2;
 
 	/** Additional multiplyer for separation force when adding separation vector to steer force */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking",meta=(AllowPrivateAccess = true))
 	int SeparationMultiplyer = 5;
 
 	/** Limits magnitude of velocity vector */
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, Category="Flocking, Entities", meta=(AllowPrivateAccess = true))
 	float MaxSpeed = 400.f;
 
 	/** Limits magnitude of acceleration vector */
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, Category="Flocking, Entities",meta=(AllowPrivateAccess = true))
 	float MaxForce = 50.f;
 
 	/** Mass of entity*/
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, Category="Flocking, Entities",meta=(AllowPrivateAccess = true))
 	float Mass = 0.7f;
 
 	/** Loops through collection of entities and applies behaviors */
@@ -222,7 +215,7 @@ protected:
 	void CalculateLeader();
 	
 	/** Target location toward which entities should steer to*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Flocking",meta=(AllowPrivateAccess = true))
 	FVector EntityTargetLocation;
 
 	/** Timer handle for calculating leader*/
@@ -270,20 +263,28 @@ protected:
 	bool bHasAssignedBoids = false;
 
 
-	// ========== Pathfinding ==============//
+	// ========== Pathfinding and collision ==============//
 	FFGrid GridInfo;
-	//FVector TopLeft;
 
-	//UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
-	//UBoxComponent* GridBox;
-
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, Category="Pathfinding", meta=(AllowPrivateAccess = true))
 	int SizeX = 3000;
 	
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, Category="Pathfinding",meta=(AllowPrivateAccess = true))
 	int SizeY= 3000;
 
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, Category="Pathfinding", meta=(AllowPrivateAccess = true))
 	int SizeZ= 3000;
-	
+
+	/** Checks for collision on leader entities path toward target location*/
+	bool CollisionOnPathToTarget(int Index);
+
+	/** Radius defining trace size*/
+	UPROPERTY(EditAnywhere, Category="Collision", meta=(AllowPrivateAccess = true))
+	float TraceRadius = 10.f;
+
+	/** Calculates force to be added to avoid collision in path toward target location*/
+	FVector CalculateCollisionAvoidanceForce();
+
+	/** Ref to colliding obstacle*/
+	FHitResult FoundObstacle;
 };
