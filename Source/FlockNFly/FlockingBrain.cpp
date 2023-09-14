@@ -354,7 +354,6 @@ FVector AFlockingBrain::CalculateCollisionAvoidanceForce(int Index)
 	// Projection vector of difference and entities curr direction
 	FVector Projection  = FVector::DotProduct(Difference, EntitiesFlockingData[Index].Velocity) * EntitiesFlockingData[Index].Velocity; // direction
 	
-	
 	return FVector::ZeroVector;
 }
 
