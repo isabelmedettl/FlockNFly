@@ -69,16 +69,23 @@ void AFlockingBrain::Tick(float DeltaTime)
 	
 	for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
 	{
-		EntitiesFlockingData[i].SteerForce = CalculateSteerForce(i);
+		FVector Steer = CalculateSteerForce(i);
+		EntitiesFlockingData[i].SteerForce = Steer;
 		CalculateNewVelocity(i);
 		Entities[i]->UpdateLocation(DeltaTime);
+		FVector CollisionAvoidanceForce = FVector::ZeroVector;
 		if (EntitiesFlockingData[i].bIsLeader)
 		{
 			if (CollisionOnPathToTarget(i))
 			{
+				//EntitiesFlockingData[i].SteerForce += CalculateCollisionAvoidanceForce(i);
+				CollisionAvoidanceForce = CalculateCollisionAvoidanceForce(i);
 				
 			}
 		}
+		EntitiesFlockingData[i].SteerForce += CollisionAvoidanceForce;
+		CalculateNewVelocity(i);
+		Entities[i]->UpdateLocation(DeltaTime);
 	}
 }
 
@@ -328,17 +335,18 @@ bool AFlockingBrain::CollisionOnPathToTarget(int Index)
 	{
 		bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(GetWorld(), EntitiesFlockingData[Index].Location,
 		TraceLocation, TraceRadius , ObjectTypes, true, IgnoreActors, EDrawDebugTrace::ForDuration,
-		HitResult, true, FColor::Green, FLinearColor::Red,  0.1f);
+		HitResult, true, FColor::Green, FLinearColor::Blue,  0.1f);
 	}
 	else
 	{
 		bHit = UKismetSystemLibrary::SphereTraceSingleForObjects(GetWorld(), EntitiesFlockingData[Index].Location,
-		EntitiesFlockingData[Index].Location + DesiredVisionRadiusToTarget, TraceRadius , ObjectTypes, true, IgnoreActors, EDrawDebugTrace::None,
+		TraceLocation, TraceRadius , ObjectTypes, true, IgnoreActors, EDrawDebugTrace::None,
 		HitResult, true, FColor::Transparent, FLinearColor::Transparent,  0.1f);
 	}
 	if (bHit)
 	{
 		FoundObstacle = HitResult;
+		//HitResult.GetActor()->Destroy();
 		//DrawDebugSphere(GetWorld(), TraceLocation, 50.f, 12, FColor::Blue, true, 0.1, 0, 1);
 
 		return true;
@@ -349,11 +357,28 @@ bool AFlockingBrain::CollisionOnPathToTarget(int Index)
 
 FVector AFlockingBrain::CalculateCollisionAvoidanceForce(int Index)
 {
-	// Difference between entities position and  obstacle's position
-	FVector Difference = FoundObstacle.Location - EntitiesFlockingData[Index].Location;
-	// Projection vector of difference and entities curr direction
-	FVector Projection  = FVector::DotProduct(Difference, EntitiesFlockingData[Index].Velocity) * EntitiesFlockingData[Index].Velocity; // direction
+	// Vector A, Difference between entities position and  obstacle's position
+	const FVector Difference = FoundObstacle.ImpactPoint - EntitiesFlockingData[Index].Location;
+	// Vector p, Projection vector of difference and entities curr direction
+	const FVector Projection  = FVector::DotProduct(Difference, EntitiesFlockingData[Index].Velocity) * EntitiesFlockingData[Index].Velocity; // direction
+
+	// Vector B
+	const FVector DifferenceFromProjection = Difference - Projection;
+
+	// Test intersection, Check if the magnitude projection is less than the magnitude of vector v. If this condition is met, it indicates that the obstacle is in the direction of entities movement
+	//	Check if the magnitude of vector b is less than the approximate radius of obstacle
+	const float ProjectionMagnitude = Projection.Length();
+	const float HeadingMagnitude = EntitiesFlockingData[Index].Velocity.Length();
 	
+	// If true = entity is within the proximity of the obstacle
+	if (ProjectionMagnitude < HeadingMagnitude && DifferenceFromProjection.Length() < DesiredVisionRadiusToTarget)
+	{
+		// Collision is impending, calculate corrective steering
+		const FVector CollisionAvoidanceForce = (HeadingMagnitude  / Difference.Size()) * EntitiesFlockingData[Index].MaxForce * EntitiesFlockingData[Index].Velocity;
+		DrawDebugLine(GetWorld(), EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Location + CollisionAvoidanceForce, FColor::Blue, true, 0.1, 0, 1);
+
+		return CollisionAvoidanceForce;
+	}
 	return FVector::ZeroVector;
 }
 
@@ -383,8 +408,8 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 		if (EntitiesFlockingData[Index].ID == EntitiesFlockingData[i].ID) { continue; }
 		const FVector DirectionToNeighbour = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location);
 
-		if (IsWithinFieldOfView(NeighbourFieldOfViewAngle, EntitiesFlockingData[Index].Location, Index, DirectionToNeighbour) /* narrow view to see neighbours to current target location*/)
-		{
+		//if (IsWithinFieldOfView(NeighbourFieldOfViewAngle, EntitiesFlockingData[Index].Location, Index, DirectionToNeighbour) /* narrow view to see neighbours to current target location*/)
+		//{
 			if (DirectionToNeighbour.Length() < DesiredVisionRadius * 2) 
 			{
 				TotalSeparationForce += EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location;
@@ -392,7 +417,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 				Alignment += EntitiesFlockingData[i].Velocity;
 				Counter++;
 			}
-		}
+		//}
 	}
 	EntitiesFlockingData[Index].NumNeighbours = Counter;
 	Separation = EntityFlockingFunctions::CalculateSeparationForce(Counter, TotalSeparationForce); // spara ner i strukten

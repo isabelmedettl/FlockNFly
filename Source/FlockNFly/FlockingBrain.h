@@ -238,7 +238,7 @@ protected:
 
 	/** Distance to target defining if entity has vision of target*/
 	UPROPERTY(EditAnywhere, Category="Flocking")
-	float DesiredVisionRadiusToTarget = 300.f;
+	float DesiredVisionRadiusToTarget = 500.f;
 
 	/** Angle deciding the narrowness of entities field of vision*/
 	UPROPERTY(EditAnywhere, Category="Flocking")
@@ -280,7 +280,7 @@ protected:
 
 	/** Radius defining trace size*/
 	UPROPERTY(EditAnywhere, Category="Collision", meta=(AllowPrivateAccess = true))
-	float TraceRadius = 10.f;
+	float TraceRadius = 70.f;
 
 	/** Calculates force to be added to avoid collision in path toward target location*/
 	FVector CalculateCollisionAvoidanceForce(int Index);
