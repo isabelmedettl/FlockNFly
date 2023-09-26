@@ -74,18 +74,20 @@ void AFlockingBrain::Tick(float DeltaTime)
 		CalculateNewVelocity(i);
 		Entities[i]->UpdateLocation(DeltaTime);
 		FVector CollisionAvoidanceForce = FVector::ZeroVector;
+		
 		if (EntitiesFlockingData[i].bIsLeader)
 		{
 			if (CollisionOnPathToTarget(i))
 			{
 				//EntitiesFlockingData[i].SteerForce += CalculateCollisionAvoidanceForce(i);
 				CollisionAvoidanceForce = CalculateCollisionAvoidanceForce(i);
+				EntitiesFlockingData[i].SteerForce += CollisionAvoidanceForce;
+				CalculateNewVelocity(i);
+				Entities[i]->UpdateLocation(DeltaTime);
 				
 			}
 		}
-		EntitiesFlockingData[i].SteerForce += CollisionAvoidanceForce;
-		CalculateNewVelocity(i);
-		Entities[i]->UpdateLocation(DeltaTime);
+		
 	}
 }
 
@@ -222,7 +224,8 @@ namespace EntityFlockingFunctions
 			NewSteeringForce /= EntityMaxSpeed;
 			NewSteeringForce *= EntityMaxForce;
 		}
-		
+
+		/*
 		else // redundant kankse?? Testa
 		{
 			float RampedSpeed = EntityMaxSpeed * (Distance.Length() / DesiredRadiusToTarget);
@@ -231,6 +234,7 @@ namespace EntityFlockingFunctions
 			const FVector Desired = (Distance).GetSafeNormal() * ClippedSpeed; 
 			NewSteeringForce = Desired - EntityVelocity;
 		}
+		*/
 		return NewSteeringForce;
 	}
 
@@ -276,11 +280,12 @@ namespace EntityFlockingFunctions
 
 void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
 {
-	float NewSpeed = EntityFlockingFunctions::CalculateSpeed(EntitiesFlockingData[IndexOfData].TargetLocation, EntitiesFlockingData[IndexOfData].Location, EntitiesFlockingData[IndexOfData].MaxSpeed, DesiredVisionRadius);
-	EntitiesFlockingData[IndexOfData].CurrentSpeed = FMath::Lerp(EntitiesFlockingData[IndexOfData].CurrentSpeed, NewSpeed, 0.1);
+	const float NewSpeed = EntityFlockingFunctions::CalculateSpeed(EntitiesFlockingData[IndexOfData].TargetLocation, EntitiesFlockingData[IndexOfData].Location, EntitiesFlockingData[IndexOfData].MaxSpeed, DesiredVisionRadius);
+	const float OldSpeed = EntitiesFlockingData[IndexOfData].CurrentSpeed;
+	EntitiesFlockingData[IndexOfData].CurrentSpeed = FMath::Lerp(OldSpeed, NewSpeed, 0.3);
 	EntitiesFlockingData[IndexOfData].Acceleration = EntitiesFlockingData[IndexOfData].SteerForce / EntitiesFlockingData[IndexOfData].Mass;
 	EntitiesFlockingData[IndexOfData].Velocity += EntitiesFlockingData[IndexOfData].Acceleration;
-	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].MaxSpeed);
+	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].MaxSpeed); //borde inte vara max speed
 }
 
 bool AFlockingBrain::IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const int EntityIndex, const FVector &Direction)
@@ -360,7 +365,7 @@ FVector AFlockingBrain::CalculateCollisionAvoidanceForce(int Index)
 	// Vector A, Difference between entities position and  obstacle's position
 	const FVector Difference = FoundObstacle.ImpactPoint - EntitiesFlockingData[Index].Location;
 	// Vector p, Projection vector of difference and entities curr direction
-	const FVector Projection  = FVector::DotProduct(Difference, EntitiesFlockingData[Index].Velocity) * EntitiesFlockingData[Index].Velocity; // direction
+	const FVector Projection  = FVector::DotProduct(Difference, EntitiesFlockingData[Index].Velocity) * EntitiesFlockingData[Index].Velocity.GetSafeNormal(); // direction
 
 	// Vector B
 	const FVector DifferenceFromProjection = Difference - Projection;
@@ -408,8 +413,8 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 		if (EntitiesFlockingData[Index].ID == EntitiesFlockingData[i].ID) { continue; }
 		const FVector DirectionToNeighbour = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location);
 
-		//if (IsWithinFieldOfView(NeighbourFieldOfViewAngle, EntitiesFlockingData[Index].Location, Index, DirectionToNeighbour) /* narrow view to see neighbours to current target location*/)
-		//{
+		if (IsWithinFieldOfView(NeighbourFieldOfViewAngle, EntitiesFlockingData[Index].Location, Index, DirectionToNeighbour) /* narrow view to see neighbours to current target location*/)
+		{
 			if (DirectionToNeighbour.Length() < DesiredVisionRadius * 2) 
 			{
 				TotalSeparationForce += EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location;
@@ -417,7 +422,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 				Alignment += EntitiesFlockingData[i].Velocity;
 				Counter++;
 			}
-		//}
+		}
 	}
 	EntitiesFlockingData[Index].NumNeighbours = Counter;
 	Separation = EntityFlockingFunctions::CalculateSeparationForce(Counter, TotalSeparationForce); // spara ner i strukten
