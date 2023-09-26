@@ -3,14 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FF_Grid.h"
 #include "FlockingBaseActor.h"
 #include "GameFramework/Actor.h"
 #include "FlockingBrain.generated.h"
 
+class AFlockingGrid;
 class AFlockingBaseActor;
 class AFlockNFlyCharacter;
 class USphereComponent;
+class FlockingNode;
 
 USTRUCT()
 struct FFlockingActorData 
@@ -263,17 +264,7 @@ protected:
 	bool bHasAssignedBoids = false;
 
 
-	// ========== Pathfinding and collision ==============//
-	FFGrid GridInfo;
-
-	UPROPERTY(EditAnywhere, Category="Pathfinding", meta=(AllowPrivateAccess = true))
-	int SizeX = 3000;
-	
-	UPROPERTY(EditAnywhere, Category="Pathfinding",meta=(AllowPrivateAccess = true))
-	int SizeY= 3000;
-
-	UPROPERTY(EditAnywhere, Category="Pathfinding", meta=(AllowPrivateAccess = true))
-	int SizeZ= 3000;
+	// ========== Collision - Currently not in use ==============//
 
 	/** Checks for collision on leader entities path toward target location*/
 	bool CollisionOnPathToTarget(int Index);
@@ -287,4 +278,24 @@ protected:
 
 	/** Ref to colliding obstacle*/
 	FHitResult FoundObstacle;
+
+
+	// ========== Pathfinding ========= //
+	//FlockingNode* CurrentEntityNode = nullptr;
+
+	AFlockingGrid* FlockingGrid = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AFlockingGrid> GridClass;
+
+	/** Maximum force magnitude that can be applied to steer the entity along the path */
+	UPROPERTY(EditAnywhere, Category="Pathfinding")
+	float MaxForceForPathFollowing = 3.f;
+
+	FVector CalculatePathFollowingForce(int Index);
+
+	FTimerHandle SetGridPointerHandle;
+
+	void SetGridPointer();
+	
 };

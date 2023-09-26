@@ -3,6 +3,7 @@
 
 #include "FlockingGrid.h"
 
+#include "FlockNFlyCharacter.h"
 #include "Pathfinder.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -31,6 +32,12 @@ void AFlockingGrid::BeginPlay()
 	if(bDebug) OnDebugDraw();
 
 	FlockingPathfinder = new Pathfinder(UGameplayStatics::GetPlayerPawn(this, 0), this);
+
+	PlayerCharacter = Cast<AFlockNFlyCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+
+	PlayerCharacter->FlockingGrid = this;
+
+	ensure (PlayerCharacter != nullptr);
 }
 
 
@@ -49,11 +56,11 @@ void AFlockingGrid::Tick(float DeltaTime)
 	// Debugging node where target location is
 	if(bDebug)
 	{
-		auto PlayerNode = GetNodeFromWorldLocation(UGameplayStatics::GetPlayerPawn(this, 0)->GetActorLocation()); 
-		DrawDebugSphere(GetWorld(), PlayerNode->GetWorldCoordinate(), NodeRadius, 10, FColor::Cyan);
+		FlockingNode* TargetNode = GetNodeFromWorldLocation(PlayerCharacter->CurrentTargetLocation); 
+		DrawDebugSphere(GetWorld(), TargetNode->GetWorldCoordinate(), NodeRadius, 10, FColor::Cyan);
 
 		// and neighbours
-		for(auto Node : GetNeighbours(PlayerNode))
+		for(auto Node : GetNeighbours(TargetNode))
 		{
 			if(Node->IsWalkable())// if it's walkable
 			{
@@ -84,8 +91,7 @@ void AFlockingGrid::CreateGrid()
 	TArray<AActor*> ActorsToIgnore;
 	TArray<AActor*> OverlappingActors;
 
-	AActor* OverlapActor = GetWorld()->SpawnActor<AActor>(OverlapCheckActorClass, GetActorLocation(),
-														  FRotator::ZeroRotator); 
+	AActor* OverlapActor = GetWorld()->SpawnActor<AActor>(OverlapCheckActorClass, GetActorLocation(),FRotator::ZeroRotator); 
 	
 	for(int x = 0; x < GridLengthX; x++)
 	{
@@ -129,7 +135,7 @@ TArray<FlockingNode*> AFlockingGrid::GetNeighbours(FlockingNode* Node) const
 		{
 			for(int z = -1; z <= 1; z++)
 			{
-				if(x == 0 && y == 0) // itself 
+				if(x == 0 && y == 0 && z == 0) // itself 
 					continue;
 
 				const int GridX = Node->GridX + x; 
@@ -176,7 +182,7 @@ void AFlockingGrid::OnDebugDraw()
 {
 
 	// Draw border of grid 
-	DrawDebugBox(GetWorld(), GetActorLocation(), FVector(GridSize.X / 2, GridSize.Y / 2, 3), FColor::Red, true);
+	DrawDebugBox(GetWorld(), GetActorLocation(), FVector(GridSize.X / 2, GridSize.Y / 2, GridSize.Z / 2), FColor::Red, true);
 
 	// draw each node where unwalkable nodes are red and walkable green
 	int ActualArrayCount = 0; 
@@ -187,13 +193,17 @@ void AFlockingGrid::OnDebugDraw()
 			for(int z = 0; z < GridLengthZ; z++)
 			{
 				FlockingNode* Node = GetNodeFromGrid(x, y, z);
-				FColor Color = Node->IsWalkable() ? FColor::Green : FColor::Red; 
-				DrawDebugBox(GetWorld(), Node->GetWorldCoordinate(), FVector(NodeRadius, NodeRadius, NodeRadius), Color, true);
+				FColor Color = Node->IsWalkable() ? FColor::Green : FColor::Red;
+				if (!Node->IsWalkable())
+				{
+					DrawDebugBox(GetWorld(), Node->GetWorldCoordinate(), FVector(NodeRadius, NodeRadius, NodeRadius), Color, true);
+				}
+				
 			}
 		}
 	}
 
-	// prints some stuff 
+	// prints 
 	UE_LOG(LogTemp, Warning, TEXT("diameter: %f"), NodeDiameter)
 	UE_LOG(LogTemp, Warning, TEXT("Grid Length: (X: %i, Y: %i, Z: %i)"), GridLengthX, GridLengthY, GridLengthZ)
 	UE_LOG(LogTemp, Warning, TEXT("GridSize: %s"), *GridSize.ToString())

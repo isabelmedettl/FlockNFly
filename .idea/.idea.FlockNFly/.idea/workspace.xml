@@ -9,21 +9,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7ffacc66-12e9-4a4a-8106-f84752647aa7" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingNode.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingNode.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEditor.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEditor.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBaseActor.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBaseActor.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Characters/AI/BP_Pathfinder.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/4/CN/GGDZLJQ46U92BDHY5CW8ZV.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/4/CN/GGDZLJQ46U92BDHY5CW8ZV.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/8/0B/NBJX3NJKJL63U0ADYWKB6L.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/8/0B/NBJX3NJKJL63U0ADYWKB6L.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/8/84/QECZWEDXO6VBHASR8TSYSH.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/8/84/QECZWEDXO6VBHASR8TSYSH.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/9/SX/XBEH6XQYZSDQVH4IYKJAEP.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/9/SX/XBEH6XQYZSDQVH4IYKJAEP.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/A/UU/D4104Q911VVBJALPQOMTR7.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/A/UU/D4104Q911VVBJALPQOMTR7.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBrain.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBrain.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Characters/AI/BP_WalkableCheckActor.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/AI/BP_WalkableCheckActor.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/3/YN/DX6T23DDL75Y3PFGZG2QM9.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/3/YN/DX6T23DDL75Y3PFGZG2QM9.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/4/CN/GGDZLJQ46U92BDHY5CW8ZV.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/8/0B/NBJX3NJKJL63U0ADYWKB6L.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/8/84/QECZWEDXO6VBHASR8TSYSH.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/9/SX/XBEH6XQYZSDQVH4IYKJAEP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/A/UU/D4104Q911VVBJALPQOMTR7.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/D/KO/N6QZ006UYT15V1KU3NVOT2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/D/KO/N6QZ006UYT15V1KU3NVOT2.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/D/MV/8EAAE5SKAO2XHZ3CR03FN4.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/D/MV/8EAAE5SKAO2XHZ3CR03FN4.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FF_Grid.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FF_Grid.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FF_PathFinder.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FF_PathFinder.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockNFlyCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockNFlyCharacter.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingGrid.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingGrid.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingGrid.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingGrid.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingNode.cpp" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/Pathfinder.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/Pathfinder.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/Pathfinder.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/Pathfinder.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -266,6 +273,9 @@
       <workItem from="1695680165465" duration="894000" />
       <workItem from="1695709141332" duration="5075000" />
       <workItem from="1695714574873" duration="1400000" />
+      <workItem from="1695716318419" duration="9000" />
+      <workItem from="1695739999313" duration="4689000" />
+      <workItem from="1695754102807" duration="8006000" />
     </task>
     <servers />
   </component>

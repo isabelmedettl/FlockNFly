@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "FlockingGrid.generated.h"
 
+class AFlockNFlyCharacter;
 class Pathfinder;
 
 UCLASS()
@@ -50,6 +51,8 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+
+	AFlockNFlyCharacter* PlayerCharacter;
 
 	// ============ General grid variables and funcs ============= //
 	
