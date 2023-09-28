@@ -64,6 +64,22 @@ void AFlockNFlyCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	//GetWorldTimerManager().SetTimer(ChangeTargetTimerHandle, this, &AFlockNFlyCharacter::ChangeTarget, 0.1f, true, ChangeTargetDelay);
+}
+
+void AFlockNFlyCharacter::ChangeTarget()
+{
+	if (IsTarget1Used)
+	{
+		CurrentTarget = Target2;
+		IsTarget1Used = false;
+	}
+	else
+	{
+		CurrentTarget = Target1;
+		IsTarget1Used = true;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -92,6 +108,8 @@ void AFlockNFlyCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 void AFlockNFlyCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	DrawDebugSphere(GetWorld(), CurrentTarget, 30.f, 30, FColor::Red, false, 0.1f, 0, 1);
 	
 }
 

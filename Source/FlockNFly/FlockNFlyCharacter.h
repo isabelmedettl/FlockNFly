@@ -52,6 +52,15 @@ public:
 	
 	FHitResult TraceHitResult;
 
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bTimerTarget = false;
+
+	FTimerHandle ChangeTargetTimerHandle;
+
+	UPROPERTY(EditAnywhere)
+	float ChangeTargetDelay = 5.f;
+
 	virtual void Tick(float DeltaSeconds) override;
 protected:
 
@@ -78,5 +87,19 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	AFlockingGrid* FlockingGrid = nullptr;
+
+	void ChangeTarget();
+
+
+	FVector CurrentTarget = FVector::ZeroVector;
+	
+	UPROPERTY(EditAnywhere)
+	FVector Target1 = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere)
+	FVector Target2 = FVector::ZeroVector;
+
+	bool IsTarget1Used = false;
+	
 };
 

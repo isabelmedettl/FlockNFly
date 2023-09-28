@@ -10,27 +10,10 @@
   <component name="ChangeListManager">
     <list default="true" id="7ffacc66-12e9-4a4a-8106-f84752647aa7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.FlockNFly/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBrain.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/AI/BP_FlockingBrain.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Characters/AI/BP_WalkableCheckActor.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/AI/BP_WalkableCheckActor.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/3/YN/DX6T23DDL75Y3PFGZG2QM9.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/3/YN/DX6T23DDL75Y3PFGZG2QM9.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/4/CN/GGDZLJQ46U92BDHY5CW8ZV.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/8/0B/NBJX3NJKJL63U0ADYWKB6L.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/8/84/QECZWEDXO6VBHASR8TSYSH.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/9/SX/XBEH6XQYZSDQVH4IYKJAEP.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/A/UU/D4104Q911VVBJALPQOMTR7.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/D/KO/N6QZ006UYT15V1KU3NVOT2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/D/KO/N6QZ006UYT15V1KU3NVOT2.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/D/MV/8EAAE5SKAO2XHZ3CR03FN4.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/ThirdPerson/Maps/ThirdPersonMap/D/MV/8EAAE5SKAO2XHZ3CR03FN4.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FF_Grid.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FF_Grid.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FF_PathFinder.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FF_PathFinder.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockNFlyCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockNFlyCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockNFlyCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockNFlyCharacter.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingBrain.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingGrid.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingGrid.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingGrid.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/FlockingGrid.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/FlockingNode.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/FlockNFly/Pathfinder.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/FlockNFly/Pathfinder.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,27 +28,27 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.51152736&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;CppUnrealEngineOptionsId&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "XThreadsFramesViewSplitterKey": "0.51152736",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "settings.editor.selected.configurable": "CppUnrealEngineOptionsId",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;rider.external.source.directories&quot;: [
-      &quot;C:\\Users\\isabe\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\DecompilerCache&quot;,
-      &quot;C:\\Users\\isabe\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\SourcesCache&quot;,
-      &quot;C:\\Users\\isabe\\AppData\\Local\\Symbols\\src&quot;
+  "keyToStringList": {
+    "rider.external.source.directories": [
+      "C:\\Users\\mijo1919\\AppData\\Roaming\\JetBrains\\Rider2023.1\\resharper-host\\DecompilerCache",
+      "C:\\Users\\mijo1919\\AppData\\Roaming\\JetBrains\\Rider2023.1\\resharper-host\\SourcesCache",
+      "C:\\Users\\mijo1919\\AppData\\Local\\Symbols\\src"
     ]
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="C++ Project.FlockNFly">
     <configuration name="FlockNFly" type="CppProject" factoryName="C++ Project">
       <configuration_1>
@@ -276,6 +259,7 @@
       <workItem from="1695716318419" duration="9000" />
       <workItem from="1695739999313" duration="4689000" />
       <workItem from="1695754102807" duration="8006000" />
+      <workItem from="1695891109202" duration="3523000" />
     </task>
     <servers />
   </component>

@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "FlockingBrain.generated.h"
 
+class UBoxComponent;
 class AFlockingGrid;
 class AFlockingBaseActor;
 class AFlockNFlyCharacter;
@@ -113,8 +114,33 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	
+	// =========== Debugging and target decisions for debugging =========== //
+	void ChangeTarget();
 
+
+	FVector CurrentTarget = FVector::ZeroVector;
+	
+	UPROPERTY(EditAnywhere)
+	FVector Target1 = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere)
+	FVector Target2 = FVector::ZeroVector;
+
+	bool IsTarget1Used = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bTimerTarget = false;
+
+	FTimerHandle ChangeTargetTimerHandle;
+
+	UPROPERTY(EditAnywhere)
+	float ChangeTargetDelay = 5.f;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* Target1Box;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* Target2Box;
 protected: 
 
 
@@ -297,5 +323,7 @@ protected:
 	FTimerHandle SetGridPointerHandle;
 
 	void SetGridPointer();
+
+
 	
 };

@@ -17,6 +17,8 @@ AFlockingBrain::AFlockingBrain()
 
 	//FFGrid Grid = FFGrid();
 	//GridInfo = Grid;
+
+	//Target1Box = CreateD
 }
 
 // Called when the game starts or when spawned
@@ -45,6 +47,10 @@ void AFlockingBrain::BeginPlay()
 
 	GetWorldTimerManager().SetTimer(SetGridPointerHandle, this, &AFlockingBrain::SetGridPointer, 0.1, false);
 
+	if (bTimerTarget)
+	{
+		GetWorldTimerManager().SetTimer(ChangeTargetTimerHandle, this, &AFlockingBrain::ChangeTarget, 0.1f, true, ChangeTargetDelay);
+	}
 
 	// could be used to optimize, and calculate a leader that does path following calculations
 	//GetWorldTimerManager().SetTimer(CalculateLeaderTimerHandle, this, &AFlockingBrain::CalculateLeader, CalculatingLeaderDelay, true, 0.1f);
@@ -87,6 +93,20 @@ void AFlockingBrain::Tick(float DeltaTime)
 			}
 		}
 		*/
+	}
+}
+
+void AFlockingBrain::ChangeTarget()
+{
+	if (IsTarget1Used)
+	{
+		CurrentTarget = Target2;
+		IsTarget1Used = false;
+	}
+	else
+	{
+		CurrentTarget = Target1;
+		IsTarget1Used = true;
 	}
 }
 
