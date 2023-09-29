@@ -52,13 +52,6 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 	}
 }
 
-void AFlockingBaseActor::UpdateSteerForce(const FVector &Force) const // skicka ref = bra, gör ingen kopia.
-{
-	ensure(FlockingActorData != nullptr);
-	FlockingActorData->SteerForce = Force;
-	
-}
-
 void AFlockingBaseActor::UpdateLocation(float DeltaTime)
 {
 	if (FlockingActorData)

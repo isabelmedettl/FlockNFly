@@ -45,13 +45,10 @@ class AFlockNFlyCharacter : public ACharacter
 public:
 	AFlockNFlyCharacter();
 	
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector CurrentTargetLocation;
 	
-	
 	FHitResult TraceHitResult;
-
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bTimerTarget = false;
@@ -86,20 +83,8 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-	AFlockingGrid* FlockingGrid = nullptr;
-
-	void ChangeTarget();
-
-
-	FVector CurrentTarget = FVector::ZeroVector;
+	//AFlockingGrid* FlockingGrid = nullptr;
 	
-	UPROPERTY(EditAnywhere)
-	FVector Target1 = FVector::ZeroVector;
-
-	UPROPERTY(EditAnywhere)
-	FVector Target2 = FVector::ZeroVector;
-
-	bool IsTarget1Used = false;
 	
 };
 

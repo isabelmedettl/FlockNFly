@@ -38,13 +38,15 @@ public:
 	 * @param WorldLocation of the node
 	 * @return pointer to Node in location
 	 */
-	FlockingNode* GetNodeFromWorldLocation(const FVector WorldLocation);
+	FlockingNode* GetNodeFromWorldLocation(FVector WorldLocation);
 
 	/** Does what the method is called*/
 	FVector GetGridBottomLeftLocation() const { return GridBottomLeftLocation; }
 
 	/** Does what the method is called*/
 	FVector GetGridSize() const { return GridSize; }
+
+	FVector TargetLocation = FVector::ZeroVector; 
 
 protected:
 	// Called when the game starts or when spawned
@@ -75,7 +77,7 @@ private:
 	/** Array size x*/
 	int GridLengthZ;
 	
-	FVector GridBottomLeftLocation; 
+	FVector GridBottomLeftLocation = FVector::ZeroVector; 
 
 	/** Checks if a node is walkable (actor checks overlaps) */
 	UPROPERTY(EditAnywhere)

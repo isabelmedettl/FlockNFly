@@ -6,6 +6,7 @@
 #include "FlockingBaseActor.h"
 #include "FlockingGrid.h"
 #include "FlockNFlyCharacter.h"
+#include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -18,7 +19,11 @@ AFlockingBrain::AFlockingBrain()
 	//FFGrid Grid = FFGrid();
 	//GridInfo = Grid;
 
-	//Target1Box = CreateD
+	Target1Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Target1Box"));
+	Target1Box->SetupAttachment(RootComponent);
+	Target2Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Target2Box"));
+	Target2Box->SetupAttachment(RootComponent);
+	
 }
 
 // Called when the game starts or when spawned
@@ -30,7 +35,7 @@ void AFlockingBrain::BeginPlay()
 	// spawn boids
 	if( PlayerCharacter != nullptr)
 	{
-		EntityTargetLocation = PlayerCharacter->GetActorLocation();
+		//EntityTargetLocation = PlayerCharacter->GetActorLocation();
 		
 		if (SpawnHeight < 0.f)
 		{
@@ -49,7 +54,9 @@ void AFlockingBrain::BeginPlay()
 
 	if (bTimerTarget)
 	{
-		GetWorldTimerManager().SetTimer(ChangeTargetTimerHandle, this, &AFlockingBrain::ChangeTarget, 0.1f, true, ChangeTargetDelay);
+		Target1 = Target1Box->GetComponentLocation();
+		Target2 = Target2Box->GetComponentLocation();
+		GetWorldTimerManager().SetTimer(ChangeTargetTimerHandle, this, &AFlockingBrain::ChangeTarget, ChangeTargetDelay, true, 0.1 );
 	}
 
 	// could be used to optimize, and calculate a leader that does path following calculations
@@ -59,40 +66,52 @@ void AFlockingBrain::BeginPlay()
 // Called every frame
 void AFlockingBrain::Tick(float DeltaTime)
 {
+	
 	Super::Tick(DeltaTime);
 
-	EntityTargetLocation = PlayerCharacter->CurrentTargetLocation;
-	if (!bHasAssignedBoids)
-	{
-		for (int i = 0; i < EntitiesFlockingData.Num(); i++)
+	if (bIsGridSet)
+	{		
+		FlockingGrid->TargetLocation = EntityTargetLocation;
+		if (!bHasAssignedBoids)
 		{
-			Entities[i]->SetFlockingDataPointer(EntitiesFlockingData[i]);
-		}
-		bHasAssignedBoids = true;
-	}
-	
-	for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
-	{
-		EntitiesFlockingData[i].SteerForce = CalculateSteerForce(i);
-		CalculateNewVelocity(i);
-		Entities[i]->UpdateLocation(DeltaTime);
-
-		// This part is currently not working very well, but could be refactored and possibly be used complementary to the pathfinding.
-		/*
-		FVector CollisionAvoidanceForce = FVector::ZeroVector;
-		
-		if (EntitiesFlockingData[i].bIsLeader)
-		{
-			if (CollisionOnPathToTarget(i))
+			for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 			{
-				//EntitiesFlockingData[i].SteerForce += CalculateCollisionAvoidanceForce(i);
-				CollisionAvoidanceForce = CalculateCollisionAvoidanceForce(i);
-				EntitiesFlockingData[i].SteerForce += CollisionAvoidanceForce;
-				CalculateNewVelocity(i);
-				Entities[i]->UpdateLocation(DeltaTime);			
+				Entities[i]->SetFlockingDataPointer(EntitiesFlockingData[i]);
 			}
+			bHasAssignedBoids = true;
 		}
-		*/
+	
+		for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
+		{
+			EntitiesFlockingData[i].SteerForce = CalculateSteerForce(i);
+			CalculateNewVelocity(i);
+			Entities[i]->UpdateLocation(DeltaTime);
+
+			// This part is currently not working very well, but could be refactored and possibly be used complementary to the pathfinding.
+			/*
+			FVector CollisionAvoidanceForce = FVector::ZeroVector;
+			
+			if (EntitiesFlockingData[i].bIsLeader)
+			{
+				if (CollisionOnPathToTarget(i))
+				{
+					//EntitiesFlockingData[i].SteerForce += CalculateCollisionAvoidanceForce(i);
+					CollisionAvoidanceForce = CalculateCollisionAvoidanceForce(i);
+					EntitiesFlockingData[i].SteerForce += CollisionAvoidanceForce;
+					CalculateNewVelocity(i);
+					Entities[i]->UpdateLocation(DeltaTime);			
+				}
+			}
+			*/
+		}
+	}
+	if (!bTimerTarget)
+	{
+		EntityTargetLocation = PlayerCharacter->CurrentTargetLocation;
+	}
+	else
+	{
+		PlayerCharacter->CurrentTargetLocation = EntityTargetLocation;
 	}
 }
 
@@ -100,20 +119,28 @@ void AFlockingBrain::ChangeTarget()
 {
 	if (IsTarget1Used)
 	{
-		CurrentTarget = Target2;
+		EntityTargetLocation = Target2;
 		IsTarget1Used = false;
 	}
 	else
 	{
-		CurrentTarget = Target1;
+		EntityTargetLocation  = Target1;
 		IsTarget1Used = true;
 	}
+	if (FlockingGrid != nullptr)
+		FlockingGrid->TargetLocation = EntityTargetLocation;
 }
 
 void AFlockingBrain::SetGridPointer()
 {
-	FlockingGrid = PlayerCharacter->FlockingGrid;
+	// Assign Grid if not already assigned 
+	if(!FlockingGrid)
+		FlockingGrid = Cast<AFlockingGrid>(UGameplayStatics::GetActorOfClass(this, AFlockingGrid::StaticClass()));
+
+	//FlockingGrid = PlayerCharacter->FlockingGrid;
 	ensure (FlockingGrid != nullptr);
+	FlockingGrid->TargetLocation = EntityTargetLocation;
+	bIsGridSet = true;
 }
 
 
@@ -307,12 +334,12 @@ namespace EntityFlockingFunctions
 void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
 {
 	// these can be used if you want a wobbly movement when boids come close to target, where the entities dont stop but paonce around the target. To use - remove first two lines below out-commented code.
-	//const float NewSpeed = EntityFlockingFunctions::CalculateSpeed(EntitiesFlockingData[IndexOfData].TargetLocation, EntitiesFlockingData[IndexOfData].Location, EntitiesFlockingData[IndexOfData].MaxSpeed, DesiredVisionRadius);
-	//const float OldSpeed = EntitiesFlockingData[IndexOfData].CurrentSpeed;
-	//EntitiesFlockingData[IndexOfData].CurrentSpeed = FMath::Lerp(OldSpeed, NewSpeed, 0.1);
-	
+	const float NewSpeed = EntityFlockingFunctions::CalculateSpeed(EntitiesFlockingData[IndexOfData].TargetLocation, EntitiesFlockingData[IndexOfData].Location, EntitiesFlockingData[IndexOfData].MaxSpeed, DesiredVisionRadius);
 	const float OldSpeed = EntitiesFlockingData[IndexOfData].CurrentSpeed;
-	EntitiesFlockingData[IndexOfData].CurrentSpeed = FMath::Lerp(OldSpeed, MaxSpeed, 0.1);
+	EntitiesFlockingData[IndexOfData].CurrentSpeed = FMath::Lerp(OldSpeed, NewSpeed, 0.3);
+	
+	//const float OldSpeed = EntitiesFlockingData[IndexOfData].CurrentSpeed;
+	//EntitiesFlockingData[IndexOfData].CurrentSpeed = FMath::Lerp(OldSpeed, MaxSpeed, 0.1);
 	EntitiesFlockingData[IndexOfData].Acceleration = EntitiesFlockingData[IndexOfData].SteerForce / EntitiesFlockingData[IndexOfData].Mass;
 	EntitiesFlockingData[IndexOfData].Velocity += EntitiesFlockingData[IndexOfData].Acceleration;
 	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].CurrentSpeed); 
@@ -422,23 +449,53 @@ FVector AFlockingBrain::CalculateCollisionAvoidanceForce(int Index)
 // Could be done by calculating the distance to the nearest point on the path, adjusting the scaling factor based on the distance to the path eg FMath::Lerp or any other curve to define how the scaling factor changes with distance
 FVector AFlockingBrain::CalculatePathFollowingForce(int Index)
 {
+	ensure (FlockingGrid != nullptr);
 	FVector PathFollowingForce = FVector::ZeroVector;
 
 	// Check if the entity is inside the flow field
-	const FVector CurrentLocation = GetActorLocation();
-	const FlockingNode* CurrentNode = FlockingGrid->GetNodeFromWorldLocation(CurrentLocation);
-
-	if (CurrentNode != nullptr)
+	const FVector CurrentLocation = EntitiesFlockingData[Index].Location;
+	// Get the direction from the flow field
+	const FVector MoveDir = FlockingGrid->GetDirectionBasedOnWorldLocation(CurrentLocation).GetSafeNormal();
+	const float DistanceToTarget = (EntityTargetLocation - CurrentLocation).Length(); 
+	
+	if (DistanceToTarget >= DesiredRadiusToTarget)
 	{
-		// Get the direction from the flow field
-		const FVector FlowFieldDirection = CurrentNode->GetDirection().GetSafeNormal();
-
-		// Calculate a force that steers the entity towards the flow field direction
-		PathFollowingForce = (FlowFieldDirection - EntitiesFlockingData[Index].Velocity.GetSafeNormal()) * MaxForceForPathFollowing;
+		const FVector Desired = MoveDir * EntitiesFlockingData[Index].MaxSpeed; 
+		PathFollowingForce = Desired - EntitiesFlockingData[Index].Velocity;
+		PathFollowingForce /= EntitiesFlockingData[Index].MaxSpeed;
+		PathFollowingForce *= EntitiesFlockingData[Index].MaxForce;
+	}
+		
+	else // makes entities move slower and almost stopping when reaching their target
+	{
+		float RampedSpeed = EntitiesFlockingData[Index].MaxSpeed * (DistanceToTarget / DesiredRadiusToTarget);
+		float ClippedSpeed = FMath::Min(RampedSpeed, EntitiesFlockingData[Index].MaxSpeed);
+			
+		const FVector Desired = MoveDir * ClippedSpeed; 
+		PathFollowingForce = Desired - EntitiesFlockingData[Index].Velocity;
 	}
 
-	//FVector TotalForce = CalculateSteerForce(Index) + PathFollowingForce;
 	return PathFollowingForce;
+}
+
+FVector AFlockingBrain::CalculateTargetFindingForce(int Index)
+{
+	FVector TargetFindingForce;
+	if (bUseFlowFieldPathfinding)
+	{
+		bUseAStarPathfinding = false;
+		TargetFindingForce = CalculatePathFollowingForce(Index);
+	}
+	else if (bUseAStarPathfinding)
+	{
+		bUseFlowFieldPathfinding = false;
+		// add a*pathfinding method;
+	}
+	else
+	{
+		TargetFindingForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
+	}
+	return TargetFindingForce;
 }
 
 
@@ -455,18 +512,12 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 		
 	EntitiesFlockingData[Index].TargetLocation = EntityTargetLocation;
 
-	CurrentSeekForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
-	Entities[Index]->UpdateSteerForce(CurrentSeekForce);	
+	CurrentSeekForce = CalculateTargetFindingForce(Index);
+	
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
-		// here you can add and chech if entity is leader, and then make path-following calculations only for that entity
-		// would be more effective performance-wise, but entities will risk collidion with objects
-		//if (EntitiesFlockingData[i].bIsLeader)
-		//{ // kanske måste flytta upp denna o göra den för index och sen för alla i loopen
-		//CurrentSeekForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
-		//}
-		
-		//Entities[i]->UpdateSteerForce(CurrentSeekForce);
+		// here you can add and chech if entity is leader, and then make path-following or seeking-target calculations only for that entity
+		// would be more effective performance-wise, but entities will risk collision with objects
 		ensure(Entities[Index]->FlockingActorData != nullptr);
 		if (EntitiesFlockingData[Index].ID == EntitiesFlockingData[i].ID) { continue; }
 		const FVector DirectionToNeighbour = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location);

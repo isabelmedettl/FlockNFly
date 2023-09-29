@@ -34,9 +34,7 @@ void AFlockingGrid::BeginPlay()
 	FlockingPathfinder = new Pathfinder(UGameplayStatics::GetPlayerPawn(this, 0), this);
 
 	PlayerCharacter = Cast<AFlockNFlyCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
-
-	PlayerCharacter->FlockingGrid = this;
-
+	
 	ensure (PlayerCharacter != nullptr);
 }
 
@@ -50,13 +48,11 @@ void AFlockingGrid::Tick(float DeltaTime)
 		FlockingPathfinder->UpdateNodesFlowField();
 	}
 	
-	const float TimeElapsedInMs = (FDateTime::UtcNow() - StartTime).GetTotalMilliseconds();
-	UE_LOG(LogTemp, Display, TEXT("%f ms each tick to update map"), TimeElapsedInMs)
-	
+
 	// Debugging node where target location is
 	if(bDebug)
 	{
-		FlockingNode* TargetNode = GetNodeFromWorldLocation(PlayerCharacter->CurrentTargetLocation); 
+		FlockingNode* TargetNode = GetNodeFromWorldLocation(TargetLocation); 
 		DrawDebugSphere(GetWorld(), TargetNode->GetWorldCoordinate(), NodeRadius, 10, FColor::Cyan);
 
 		// and neighbours
@@ -161,7 +157,7 @@ int AFlockingGrid::GetIndex(const int IndexX, const int IndexY, const int IndexZ
 }
 
 
-FlockingNode* AFlockingGrid::GetNodeFromWorldLocation(const FVector NodeWorldLocation) 
+FlockingNode* AFlockingGrid::GetNodeFromWorldLocation(FVector NodeWorldLocation) 
 {
 	// position relative to grids bottom left corner 
 	const float GridRelativeX = NodeWorldLocation.X  - GridBottomLeftLocation.X; 

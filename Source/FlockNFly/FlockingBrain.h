@@ -92,12 +92,7 @@ class FLOCKNFLY_API AFlockingBrain : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AFlockingBrain();
-
-	/** Area to spawn boids in 
-	UPROPERTY(EditAnywhere)
-	USphereComponent* SpawnArea;
-	*/
-
+	
 	/** Subclass of boid character to be spawned*/
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AFlockingBaseActor> FlockingBaseActorClass;
@@ -116,9 +111,7 @@ public:
 
 	// =========== Debugging and target decisions for debugging =========== //
 	void ChangeTarget();
-
-
-	FVector CurrentTarget = FVector::ZeroVector;
+	
 	
 	UPROPERTY(EditAnywhere)
 	FVector Target1 = FVector::ZeroVector;
@@ -126,7 +119,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	FVector Target2 = FVector::ZeroVector;
 
-	bool IsTarget1Used = false;
+	bool IsTarget1Used = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bTimerTarget = false;
@@ -141,9 +134,18 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* Target2Box;
-protected: 
+protected:
 
+	// ======= Bools and methods to adjust the way entities are searching for target location ==== //
+	UPROPERTY(EditAnywhere, Category="Pathfinding", meta=(AllowPrivateAccess = true))
+	bool bUseFlowFieldPathfinding = true;
 
+	UPROPERTY(EditAnywhere, Category="Pathfinding", meta=(AllowPrivateAccess = true))
+	bool bUseAStarPathfinding = false;
+
+	/** Performs different target-seeking calculation depending on which pathfinding is used. If none are used, entites seek target without checking for collision*/
+	FVector CalculateTargetFindingForce(int Index);
+	
 	/** Array containing Flocking data structs to all active entities, mapped to Entities*/
 	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
 	TArray<FFlockingActorData> EntitiesFlockingData;
@@ -188,13 +190,10 @@ protected:
 	/** Pointer to player character*/
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess = true))
 	AFlockNFlyCharacter* PlayerCharacter;
-
 	
 
-
 	void SpawnEntity(const FVector &SpawnLocation, int ID);
-
-
+	
 	// ======= Weights and methods for flocking behaviors ========= //
 
 		/** Multiplyer for applying cohesion force*/
@@ -324,6 +323,7 @@ protected:
 
 	void SetGridPointer();
 
-
+	/** Bool to check if grid is set, otherwise we wait until until it is*/
+	bool bIsGridSet = false;
 	
 };
