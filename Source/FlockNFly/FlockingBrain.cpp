@@ -484,15 +484,19 @@ FVector AFlockingBrain::CalculateTargetFindingForce(int Index)
 	if (bUseFlowFieldPathfinding)
 	{
 		bUseAStarPathfinding = false;
+		FlockingGrid->bUseFlowFillAlgorithm = true;
 		TargetFindingForce = CalculatePathFollowingForce(Index);
 	}
 	else if (bUseAStarPathfinding)
 	{
 		bUseFlowFieldPathfinding = false;
+		FlockingGrid->bUseFlowFillAlgorithm = false;
+
 		// add a*pathfinding method;
 	}
 	else
 	{
+		FlockingGrid->bUseFlowFillAlgorithm = false;
 		TargetFindingForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
 	}
 	return TargetFindingForce;

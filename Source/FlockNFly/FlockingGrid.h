@@ -22,9 +22,8 @@ public:
 
 	virtual ~AFlockingGrid() override;
 
-	/** bool to start flow field pathfinding. If false, A* will be run instead */
-	UPROPERTY(EditAnywhere)
-	bool bUseFlowFillAlgorithm = true;
+	/** bool to start flow field pathfinding. If false, A* will be run instead. Set from brain depending on editor bool sets*/
+	bool bUseFlowFillAlgorithm = false;
 
 	virtual void Tick(float DeltaSeconds) override;
 

@@ -42,9 +42,10 @@ void AFlockingGrid::BeginPlay()
 // Called every frame
 void AFlockingGrid::Tick(float DeltaTime)
 {
-	FDateTime StartTime = FDateTime::UtcNow();
-	if (bUseFlowFillAlgorithm )
+	
+	if (bUseFlowFillAlgorithm)
 	{
+		FDateTime StartTime = FDateTime::UtcNow();
 		FlockingPathfinder->UpdateNodesFlowField();
 	}
 	
