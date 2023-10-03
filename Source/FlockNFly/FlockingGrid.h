@@ -16,7 +16,12 @@ class FLOCKNFLY_API AFlockingGrid : public AActor
 	GENERATED_BODY()
 
 public:
-	
+
+
+	// remove after debugging
+
+	FVector LocStart = FVector::ZeroVector;
+	FVector LocTarget = FVector::ZeroVector;
 	// Sets default values for this actor's properties
 	AFlockingGrid();
 
@@ -24,6 +29,8 @@ public:
 
 	/** bool to start flow field pathfinding. If false, A* will be run instead. Set from brain depending on editor bool sets*/
 	bool bUseFlowFillAlgorithm = false;
+
+	bool bUseAStarAlgorithm = false;
 
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -45,13 +52,31 @@ public:
 	/** Does what the method is called*/
 	FVector GetGridSize() const { return GridSize; }
 
-	FVector TargetLocation = FVector::ZeroVector; 
+	FVector TargetLocation = FVector::ZeroVector;
+
+	FVector StartLocation = FVector::ZeroVector;
+
+	void OnDebugPathDraw();
+
+	/** Gets the max size of grid */
+	int GetGridMaxSize() const
+	{
+		return GridLengthX /NodeDiameter + GridLengthY /NodeDiameter + GridLengthZ /NodeDiameter;
+	}
+
+	void OnPathFound();
+
+	TArray<FVector> AStarPath = TArray<FVector>();;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
+
+	UPROPERTY(VisibleAnywhere, Category="A*")
+	float MovementPenalty = 400.f;
+	
 
 	AFlockNFlyCharacter* PlayerCharacter;
 
@@ -68,7 +93,7 @@ private:
 	/** The size of the grid */
 	UPROPERTY(EditAnywhere)
 	FVector GridSize = FVector(100, 100, 100);
-
+	
 	/** Array size x*/
 	int GridLengthX;
 	/** Array size x*/
@@ -89,8 +114,7 @@ private:
 	bool bDebug = true; 
 	
 	void OnDebugDraw();
-
-	// ========== Flow field pathfinding ======= //
+	
 	void CreateGrid();
 
 	void AddToArray(const int IndexX, const int IndexY, const int IndexZ, const FlockingNode Node);

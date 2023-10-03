@@ -66,35 +66,7 @@ private:
 
 	/** Bool for checking if flocking data struct has been set*/
 	bool bHasEntityDataBeenSet = false;
-		
-	// =========== Flocking rules vectors ============ //
-	/** Separation vector*/ 
-	//FVector Separation = FVector::ZeroVector;
 	
-	/** Cohesion vector*/
-	//FVector Cohesion = FVector::ZeroVector;
-
-	/** Alignment vector */
-	//FVector Alignment = FVector::ZeroVector;
-	
-
-	/** Attempts to match the velocity of other entities inside this entity´s visible range by adding neighbours velocity to computation vector*/
-	//FVector CalculateAlignmentForce(TArray<AFlockingBaseActor*> &Entities);
-
-	
-
-	// ============= Collision and 3D navigation =========== //
-	// http://www.red3d.com/cwr/steer/gdc99/
-	// https://github.com/darbycostello/Nav3D
-
-
-	// https://github.com/FAUSheppy/DonAINavigation/blob/master/Source/DonAINavigation/Private/BehaviorTree/BTTask_FlyTo.cpp
-
-	// https://www.youtube.com/watch?v=-oG_8z7b6eM
-
-	// pathfinding
-	// https://www.youtube.com/watch?v=GdhnLIvDQj4
-	//https://www.youtube.com/watch?v=p3WcsO6pAmU
 	
 };
 

@@ -15,15 +15,15 @@ AFlockingBrain::AFlockingBrain()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	//FFGrid Grid = FFGrid();
-	//GridInfo = Grid;
-
+	
 	Target1Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Target1Box"));
 	Target1Box->SetupAttachment(RootComponent);
 	Target2Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Target2Box"));
 	Target2Box->SetupAttachment(RootComponent);
-	
+	Target3Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Target3Box"));
+	Target3Box->SetupAttachment(RootComponent);
+	Target4Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Target4Box"));
+	Target4Box->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -56,55 +56,57 @@ void AFlockingBrain::BeginPlay()
 	{
 		Target1 = Target1Box->GetComponentLocation();
 		Target2 = Target2Box->GetComponentLocation();
+		Target3 = Target3Box->GetComponentLocation();
+		Target4 = Target4Box->GetComponentLocation();
+		
 		GetWorldTimerManager().SetTimer(ChangeTargetTimerHandle, this, &AFlockingBrain::ChangeTarget, ChangeTargetDelay, true, 0.1 );
 	}
 
-	// could be used to optimize, and calculate a leader that does path following calculations
-	//GetWorldTimerManager().SetTimer(CalculateLeaderTimerHandle, this, &AFlockingBrain::CalculateLeader, CalculatingLeaderDelay, true, 0.1f);
 }
 
 // Called every frame
 void AFlockingBrain::Tick(float DeltaTime)
 {
-	
 	Super::Tick(DeltaTime);
-
-	if (bIsGridSet)
-	{		
-		FlockingGrid->TargetLocation = EntityTargetLocation;
-		if (!bHasAssignedBoids)
-		{
-			for (int i = 0; i < EntitiesFlockingData.Num(); i++)
-			{
-				Entities[i]->SetFlockingDataPointer(EntitiesFlockingData[i]);
-			}
-			bHasAssignedBoids = true;
-		}
 	
+	if (!bHasAssignedBoids)
+	{
+		for (int i = 0; i < EntitiesFlockingData.Num(); i++)
+		{
+			Entities[i]->SetFlockingDataPointer(EntitiesFlockingData[i]);
+		}
+		bHasAssignedBoids = true;
+	}
+
+	if (!bIsGridSet) return;
+		
+	UpdateTimerTarget();
+	DrawDebugSphere(GetWorld(), EntityTargetLocation, 30.f, 40, FColor::Red, false, 0.1, 1, 0);
+	FlockingGrid->TargetLocation = EntityTargetLocation;
+
+	if (!bUseAStarPathfinding)
+	{
 		for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
 		{
 			EntitiesFlockingData[i].SteerForce = CalculateSteerForce(i);
 			CalculateNewVelocity(i);
 			Entities[i]->UpdateLocation(DeltaTime);
-
-			// This part is currently not working very well, but could be refactored and possibly be used complementary to the pathfinding.
-			/*
-			FVector CollisionAvoidanceForce = FVector::ZeroVector;
-			
-			if (EntitiesFlockingData[i].bIsLeader)
-			{
-				if (CollisionOnPathToTarget(i))
-				{
-					//EntitiesFlockingData[i].SteerForce += CalculateCollisionAvoidanceForce(i);
-					CollisionAvoidanceForce = CalculateCollisionAvoidanceForce(i);
-					EntitiesFlockingData[i].SteerForce += CollisionAvoidanceForce;
-					CalculateNewVelocity(i);
-					Entities[i]->UpdateLocation(DeltaTime);			
-				}
-			}
-			*/
+			//Here you could call for collision avoidance checks and methods (aka tracing collision checks and calculation, not pathfinding)
 		}
 	}
+	else
+	{
+		for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
+		{
+			
+			//EntitiesFlockingData[i].Location = FlockingGrid->StartLocation;
+			DecideTargetFindingMethod(i);
+		}
+		
+	}
+
+	
+
 	if (!bTimerTarget)
 	{
 		EntityTargetLocation = PlayerCharacter->CurrentTargetLocation;
@@ -115,20 +117,37 @@ void AFlockingBrain::Tick(float DeltaTime)
 	}
 }
 
-void AFlockingBrain::ChangeTarget()
+void AFlockingBrain::ChangeTarget() 
 {
-	if (IsTarget1Used)
+	bIsTimeToSwitchTarget = !bIsTimeToSwitchTarget;
+}
+
+void AFlockingBrain::UpdateTimerTarget()
+{
+	// Check if it's time to switch to the next target
+	if (bIsTimeToSwitchTarget)
 	{
-		EntityTargetLocation = Target2;
-		IsTarget1Used = false;
+		CurrentTargetIndex = (CurrentTargetIndex + 1) % 4;
+		switch (CurrentTargetIndex)
+		{
+		case 0:
+			EntityTargetLocation = Target1;
+			break;
+		case 1:
+			EntityTargetLocation = Target2;
+			break;
+		case 2:
+			EntityTargetLocation = Target3;
+			break;
+		case 3:
+			EntityTargetLocation = Target4;
+			break;
+
+		default:
+			EntityTargetLocation = Target1;
+		}
+		bIsTimeToSwitchTarget = false;
 	}
-	else
-	{
-		EntityTargetLocation  = Target1;
-		IsTarget1Used = true;
-	}
-	if (FlockingGrid != nullptr)
-		FlockingGrid->TargetLocation = EntityTargetLocation;
 }
 
 void AFlockingBrain::SetGridPointer()
@@ -142,7 +161,6 @@ void AFlockingBrain::SetGridPointer()
 	FlockingGrid->TargetLocation = EntityTargetLocation;
 	bIsGridSet = true;
 }
-
 
 void AFlockingBrain::SpawnBoids()
 {
@@ -266,7 +284,8 @@ namespace EntityFlockingFunctions
 	
 	/** Calculates seeking force to target by calculating vector resulting from subtracting the desired position from the current position. The result is the appropriate velocity
 	 * Not used when using pathfinding*/
-	FVector CalculateSeekForce (const FVector &CurrentTargetLocation, const FVector &EntityLocation, const FVector &EntityVelocity, const float EntityMaxSpeed, const float EntityMaxForce, const float DesiredRadiusToTarget)
+	FVector CalculateSeekForce (const FVector &CurrentTargetLocation, const FVector &EntityLocation,
+		const FVector &EntityVelocity, const float EntityMaxSpeed, const float EntityMaxForce, const float DesiredRadiusToTarget)
 	{
 		const FVector Distance = CurrentTargetLocation - EntityLocation;
 		FVector NewSteeringForce;
@@ -342,38 +361,34 @@ void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
 	//EntitiesFlockingData[IndexOfData].CurrentSpeed = FMath::Lerp(OldSpeed, MaxSpeed, 0.1);
 	EntitiesFlockingData[IndexOfData].Acceleration = EntitiesFlockingData[IndexOfData].SteerForce / EntitiesFlockingData[IndexOfData].Mass;
 	EntitiesFlockingData[IndexOfData].Velocity += EntitiesFlockingData[IndexOfData].Acceleration;
-	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].CurrentSpeed); 
+	EntitiesFlockingData[IndexOfData].Velocity = EntitiesFlockingData[IndexOfData].Velocity.GetClampedToMaxSize(EntitiesFlockingData[IndexOfData].CurrentSpeed);
+	
 }
 
-bool AFlockingBrain::IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const int EntityIndex, const FVector &Direction)
+bool AFlockingBrain::IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const FVector &EntityVelocity, const FVector &Direction) const
 {
 	// Calculate the angle between the actor's forward vector and the direction vector to the target
-	float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(Direction.GetSafeNormal(), Entities[EntityIndex]->GetActorForwardVector())));
+	float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(EntityVelocity.GetSafeNormal(),Direction.GetSafeNormal())));
+
+	/*
+	if (bDebug)
+	{
+		FVector ConeOrigin = EntityLocation;
+		FVector ConeDirection = EntityVelocity.GetSafeNormal();
+		float ConeLength = DesiredVisionRadius * 2;
+		float ConeAngle = FMath::DegreesToRadians(AngleToView);
+
+		DrawDebugCone(GetWorld(), ConeOrigin, ConeDirection, ConeLength, ConeAngle, ConeAngle, 30, FColor::Red, false, 0.1, 0, 4);
+		DrawDebugSphere(GetWorld(), EntityLocation, DesiredVisionRadius * 2, 15, FColor::Cyan, false, 0.1, 0, 1);
+	}
+	*/
 	
 	// Check if the target is within the specified angle and radius
-	if (AngleDegrees <= AngleToView/ 2 && Direction.Size() <= DesiredRadiusToTarget *2 )
+	if (AngleDegrees <= AngleToView/ 2 && Direction.Size() <= DesiredVisionRadius * 2 )
 	{
 		return true;
 	}
 	return false;
-}
-
-void AFlockingBrain::CalculateLeader()
-{
-	int Index = 0;
-	for (int i = 0; i < EntitiesFlockingData.Num() - 1; i++)
-	{
-		if (EntitiesFlockingData[i].DistanceToTarget < EntitiesFlockingData[i+1].DistanceToTarget)
-		{
-			Index = i;
-			EntitiesFlockingData[i +1].bIsLeader = false;
-		}else
-		{
-			Index = i+1;
-			EntitiesFlockingData[i].bIsLeader = false;
-		}
-	}
-	EntitiesFlockingData[Index].bIsLeader = true;
 }
 
 bool AFlockingBrain::CollisionOnPathToTarget(int Index)
@@ -450,7 +465,7 @@ FVector AFlockingBrain::CalculateCollisionAvoidanceForce(int Index)
 FVector AFlockingBrain::CalculatePathFollowingForce(int Index)
 {
 	ensure (FlockingGrid != nullptr);
-	FVector PathFollowingForce = FVector::ZeroVector;
+	FVector PathFollowingForce;
 
 	// Check if the entity is inside the flow field
 	const FVector CurrentLocation = EntitiesFlockingData[Index].Location;
@@ -478,25 +493,36 @@ FVector AFlockingBrain::CalculatePathFollowingForce(int Index)
 	return PathFollowingForce;
 }
 
-FVector AFlockingBrain::CalculateTargetFindingForce(int Index)
+FVector AFlockingBrain::DecideTargetFindingMethod(int Index)
 {
 	FVector TargetFindingForce;
 	if (bUseFlowFieldPathfinding)
 	{
 		bUseAStarPathfinding = false;
 		FlockingGrid->bUseFlowFillAlgorithm = true;
+		FlockingGrid->bUseAStarAlgorithm = false;
 		TargetFindingForce = CalculatePathFollowingForce(Index);
 	}
 	else if (bUseAStarPathfinding)
 	{
 		bUseFlowFieldPathfinding = false;
 		FlockingGrid->bUseFlowFillAlgorithm = false;
+		FlockingGrid->bUseAStarAlgorithm = true;
+		FlockingGrid->StartLocation = EntitiesFlockingData[Index].Location;
+		FlockingGrid->TargetLocation = EntityTargetLocation;
+
+
+		//TargetFindingForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
 
 		// add a*pathfinding method;
+		//TargetFindingForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
+
+		
 	}
 	else
 	{
 		FlockingGrid->bUseFlowFillAlgorithm = false;
+		FlockingGrid->bUseAStarAlgorithm= false;
 		TargetFindingForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
 	}
 	return TargetFindingForce;
@@ -509,45 +535,51 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 	int Counter = 0;
 	FVector TotalSeparationForce = FVector::ZeroVector;
 	FVector CenterOfMass = FVector::ZeroVector;
-	FVector CurrentSeekForce = FVector::ZeroVector;
-	FVector TotalForce = FVector::ZeroVector;
+	FVector TotalVelocity = FVector::ZeroVector;
 
 	ensure(Entities[Index] != nullptr);
 		
 	EntitiesFlockingData[Index].TargetLocation = EntityTargetLocation;
+	EntitiesFlockingData[Index].bIsLeader = false;
 
-	CurrentSeekForce = CalculateTargetFindingForce(Index);
-	
+	int LeaderIndex = Index;
+	const FVector CurrentSeekForce = DecideTargetFindingMethod(Index);
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
-		// here you can add and chech if entity is leader, and then make path-following or seeking-target calculations only for that entity
+		// here you can add and check if entity is leader, and then make path-following or seeking-target calculations only for that entity
 		// would be more effective performance-wise, but entities will risk collision with objects
+		if (EntitiesFlockingData[Index].DistanceToTarget > EntitiesFlockingData[i].DistanceToTarget) LeaderIndex = i;
+		
 		ensure(Entities[Index]->FlockingActorData != nullptr);
 		if (EntitiesFlockingData[Index].ID == EntitiesFlockingData[i].ID) { continue; }
 		const FVector DirectionToNeighbour = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location);
 
-		if (IsWithinFieldOfView(NeighbourFieldOfViewAngle, EntitiesFlockingData[Index].Location, Index, DirectionToNeighbour) /* narrow view to see neighbours to current target location*/)
-		{
+		if (IsWithinFieldOfView(NeighbourFieldOfViewAngle, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, DirectionToNeighbour) /* narrow view to see neighbours to current target location*/)
+		{		 
 			if (DirectionToNeighbour.Length() < DesiredVisionRadius * 2) 
 			{
 				TotalSeparationForce += EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location;
-				Cohesion += EntitiesFlockingData[Index].Location;
-				Alignment += EntitiesFlockingData[i].Velocity;
+				CenterOfMass += EntitiesFlockingData[i].Location;
+				TotalVelocity += EntitiesFlockingData[i].Velocity;
 				Counter++;
 			}
 		}
+		EntitiesFlockingData[i].bIsLeader = false;
 	}
+	EntitiesFlockingData[LeaderIndex].bIsLeader = true;
+	FlockingGrid->StartLocation = EntitiesFlockingData[LeaderIndex].Location;
 	EntitiesFlockingData[Index].NumNeighbours = Counter;
-	Separation = EntityFlockingFunctions::CalculateSeparationForce(Counter, TotalSeparationForce); // spara ner i strukten
+
+	Separation = EntityFlockingFunctions::CalculateSeparationForce(Counter, TotalSeparationForce);
 	Separation *= SeparationWeight;
 
-	Cohesion = EntityFlockingFunctions::CalculateCohesionForce(Counter, CenterOfMass, EntitiesFlockingData[Index].Location); // skicka ref till total cohesion force
+	Cohesion = EntityFlockingFunctions::CalculateCohesionForce(Counter, CenterOfMass, EntitiesFlockingData[Index].Location); 
 	Cohesion *= CohesionWeight;
 	
-	Alignment = EntityFlockingFunctions::CalculateAlignmentForce(Counter,Alignment);
+	Alignment = EntityFlockingFunctions::CalculateAlignmentForce(Counter,TotalVelocity);
 	Alignment *= AlignmentWeight;
 	
-	TotalForce = CurrentSeekForce + Cohesion + Alignment + Separation * SeparationMultiplyer;
+	FVector TotalForce = CurrentSeekForce + Cohesion + Alignment + Separation * SeparationMultiplyer;
 	
 	return TotalForce;
 }

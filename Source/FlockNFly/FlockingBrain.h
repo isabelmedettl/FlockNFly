@@ -16,9 +16,8 @@ class FlockingNode;
 
 USTRUCT()
 struct FFlockingActorData 
-	{
+{
 	GENERATED_BODY()
-
 	
 	FFlockingActorData()
 	{
@@ -38,8 +37,6 @@ struct FFlockingActorData
 		bIsLeader = false;
 		
 	}
-	
-
 	/** Current velocity of entity*/
 	FVector Velocity;
 
@@ -112,14 +109,23 @@ public:
 	// =========== Debugging and target decisions for debugging =========== //
 	void ChangeTarget();
 	
-	
 	UPROPERTY(EditAnywhere)
 	FVector Target1 = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere)
 	FVector Target2 = FVector::ZeroVector;
 
-	bool IsTarget1Used = true;
+	UPROPERTY(EditAnywhere)
+	FVector Target3 = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere)
+	FVector Target4 = FVector::ZeroVector;
+
+	bool bIsTimeToSwitchTarget = false;
+
+	int CurrentTargetIndex = 0;
+
+	void UpdateTimerTarget();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bTimerTarget = false;
@@ -134,17 +140,23 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* Target2Box;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* Target3Box;
+	
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* Target4Box;
 protected:
 
 	// ======= Bools and methods to adjust the way entities are searching for target location ==== //
 	UPROPERTY(EditAnywhere, Category="Pathfinding", meta=(AllowPrivateAccess = true))
-	bool bUseFlowFieldPathfinding = true;
+	bool bUseFlowFieldPathfinding = false;
 
 	UPROPERTY(EditAnywhere, Category="Pathfinding", meta=(AllowPrivateAccess = true))
 	bool bUseAStarPathfinding = false;
 
 	/** Performs different target-seeking calculation depending on which pathfinding is used. If none are used, entites seek target without checking for collision*/
-	FVector CalculateTargetFindingForce(int Index);
+	FVector DecideTargetFindingMethod(int Index);
 	
 	/** Array containing Flocking data structs to all active entities, mapped to Entities*/
 	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
@@ -235,21 +247,12 @@ protected:
 	void CalculateNewVelocity(const int IndexOfData);
 
 	/** Checks if entity is in field of view of another entity*/
-	bool IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const int EntityIndex, const FVector &Direction);
-
-	/** Calculates which enitity is closest to target location, and makes that entity the leader*/
-	void CalculateLeader();
+	bool IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const FVector &EntityVelocity, const FVector &Direction) const;
+	
 	
 	/** Target location toward which entities should steer to*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Flocking",meta=(AllowPrivateAccess = true))
 	FVector EntityTargetLocation;
-
-	/** Timer handle for calculating leader*/
-	FTimerHandle CalculateLeaderTimerHandle;
-
-	/** Delay for calculating leader*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking", meta=(AllowPrivateAccess = true))
-	float CalculatingLeaderDelay = 0.5f;
 
 	
 	// =========== Flocking variables ============= //

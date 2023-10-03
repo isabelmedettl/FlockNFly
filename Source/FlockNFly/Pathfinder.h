@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 
+class FlockingHeap;
 class AFlockNFlyCharacter;
 class AFlockingGrid;
 /**
@@ -14,31 +15,56 @@ public:
 
 	Pathfinder(APawn* PlayerActor, AFlockingGrid* MapGrid);
 
+	virtual ~Pathfinder();
 	
 
 	/** Method for flow field pathfinding, and aalled each tick from grid class */
 	void UpdateNodesFlowField();
 
+	/** Method for A*, calculating path */
+	void FindPath();
+
+	class FlockingNode* FindLowestFCostNode(const TArray<FlockingNode*>& OpenSet);
+
+	float DistanceBetweenNodes(const FlockingNode* NodeA, const FlockingNode* NodeB);
+
+	TArray<FlockingNode*> Path;
+
+	bool bHasPath = false;
+
+	FVector TargetLocation = FVector::ZeroVector;
 private:
 
-	// ============ Flow field pathfinding ============= //
+	bool bHasResetAStarNodeCosts = false;
+
+	void ResetAStarNodeCosts();
 	APawn* PlayerPawn;
 
 	AFlockNFlyCharacter* PlayerCharacter;
 
-	FVector TargetLocation = FVector::ZeroVector;
+	
 
 	/** If target not moving, makes it to skip flowfield pathfinding */
-	class FlockingNode* OldTargetNode = nullptr; 
+	FlockingNode* OldTargetNode = nullptr;
+
+	/** If entity not moving, makes it to skip a* pathfinding */
+	FlockingNode* OldStartNode = nullptr;
+
+	/** If target not moving, makes it to skip a* pathfinding */
+	FlockingNode* OldEndNode = nullptr;
 
 	/** Pointer to grid class*/
 	AFlockingGrid* Grid;
 
 	/** Sets cost to max for each node */
-	void ResetNodeCosts();
+	void ResetFlowFieldNodeCosts();
 	
 	void SetDirectionInUnWalkableNode(FlockingNode* NeighbourNode); 
 
-	bool bIsDirectionInUnWalkableNodesSet = false; 
+	bool bIsDirectionInUnWalkableNodesSet = false;
+
+	//friend class FlockingHeap;
+	//FlockingHeap* OpenSet = nullptr;
 	
 };
+

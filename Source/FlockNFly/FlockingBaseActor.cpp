@@ -50,6 +50,8 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 		FlockingMeshComponent->SetMaterial(0, BasicMaterial);
 
 	}
+
+	
 }
 
 void AFlockingBaseActor::UpdateLocation(float DeltaTime)

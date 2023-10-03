@@ -6,8 +6,8 @@ class FLOCKNFLY_API FlockingNode
 {
 public:
 	/** Constructor with parameters*/
-	FlockingNode(const bool bIsWalkable, const FVector WorldCoord, const int GridX, const int GridY, const int GridZ) : GridX(GridX), GridY(GridY), GridZ(GridZ), bWalkable(bIsWalkable), WorldCoordinate(WorldCoord)
-	{}
+	FlockingNode(const bool bIsWalkable, const FVector WorldCoord, const int GridX, const int GridY, const int GridZ, int NewMovementPenalty)
+		: bWalkable(bIsWalkable), WorldCoordinate(WorldCoord), GridX(GridX), GridY(GridY), GridZ(GridZ), MovementPenalty(NewMovementPenalty) {}
 	/** Empty constructor*/
 	FlockingNode() {}
 
@@ -25,30 +25,110 @@ public:
 	 */
 	FVector GetDirection() const { return Direction; }
 
+	// =============  A* variables  ============== /
+	/** Cost from the start node to this node */
+	int GCost  = 1;
 	
+	/** Heuristic cost from this node to the target nod */
+	int HCost = 1;
+
+	/** The sum of GCost and HCost */
+	int FCost = 1;
+
+	// ====== Getters ======= //
 	bool IsWalkable() const { return bWalkable; }
+
+	bool IsInOpenSet() const {return bIsInOpenSet; }
+
+	bool IsInVisited() const { return bIsInVisited; }
 
 	FVector GetWorldCoordinate() const { return WorldCoordinate; }
 
-	int GetCost() const { return Cost; }
+	int GetFlowFieldCost() const { return FlowCost; }
 
-	void SetCost(const int NewCost) { Cost = NewCost; }
+	int GetFCost() const { return GCost + HCost; }
 
+	int GetGCost() const { return GCost; }
+
+	int GetHCost() const { return HCost; }
+
+
+	// ====== Setters ======= //
+
+	void SetFlowFieldCost(const int NewCost) { FlowCost = NewCost; }
+
+	void SetFCost(const int NewCost) { FCost = NewCost; }
+	
+	void SetGCost(const int NewCost) { GCost = NewCost; }
+
+	void SetHCost(const int NewCost) { HCost = NewCost; }
+
+	void SetIsInOpenSet(const bool NewValue) { bIsInOpenSet = NewValue;}
+	void SetIsInVisited(const bool NewValue) { bIsInVisited = NewValue;}
+
+
+	
+	/** If the node is walkable */
+	bool bWalkable = false;
+
+	
+	/** Nodes location in world space*/
+	FVector WorldCoordinate;
+	
 	int GridX = -1;
 	int GridY = -1;
-	int GridZ = -1; 
+	int GridZ = -1;
+
+	int HeapIndex = 0;
+	
+
+	/** The node that leads to this node with the lowest FCost */
+	FlockingNode* ParentNode;
+
+	int MovementPenalty = 1;
+
+	/*
+	// Overload the '>' operator
+	bool operator>(const FlockingNode& OtherNode) const
+	{
+		if (FCost == OtherNode.FCost)
+		{
+			return HCost > OtherNode.HCost;
+		}
+		return FCost > OtherNode.FCost;
+	}
+
+	// Overload the '<' operator
+	bool operator<(const FlockingNode& OtherNode) const
+	{
+		if (FCost == OtherNode.FCost)
+		{
+			return HCost < OtherNode.HCost;
+		}
+		return FCost < OtherNode.FCost;
+	}
+
+	// Overload the '==' operator
+	bool operator==(const FlockingNode& OtherNode) const
+	{
+		return FCost == OtherNode.FCost && HCost == OtherNode.HCost;
+	}
+	*/
 	
 private:
 	/** Nodes current direction, aka the direction of where entity should move toward when at current node*/
 	FVector Direction = FVector::Zero();
 
-	/** If the node is walkable */
-	bool bWalkable = false;
-
-	/** Nodes location in world space*/
-	FVector WorldCoordinate;
 
 	/** Cost to get to this node */
-	int Cost = INT_MAX;
-	
+	int FlowCost = INT_MAX;
+
+	 
+
+	/** Bool that indicates if node is in closed or open set, for a**/
+	bool bIsInOpenSet;
+
+	/** Bool that indicates if node is in closed or open set, for a**/
+	bool bIsInVisited;
 };
+
