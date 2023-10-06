@@ -36,7 +36,6 @@ void AFlockingBrain::BeginPlay()
 	if( PlayerCharacter != nullptr)
 	{
 		//EntityTargetLocation = PlayerCharacter->GetActorLocation();
-		
 		if (SpawnHeight < 0.f)
 		{
 			SpawnHeight = GetActorLocation().Y;
@@ -46,7 +45,6 @@ void AFlockingBrain::BeginPlay()
 		{
 			SpawnBoids();
 		}
-		
 	}
 	DistanceBetweenEntities = DesiredVisionRadius - 50.f;
 
@@ -61,7 +59,6 @@ void AFlockingBrain::BeginPlay()
 		
 		GetWorldTimerManager().SetTimer(ChangeTargetTimerHandle, this, &AFlockingBrain::ChangeTarget, ChangeTargetDelay, true, 0.1 );
 	}
-
 }
 
 // Called every frame
@@ -79,11 +76,21 @@ void AFlockingBrain::Tick(float DeltaTime)
 	}
 
 	if (!bIsGridSet) return;
+	if (!FlockingGrid->bAllNodesAdded) return;
 		
 	UpdateTimerTarget();
 	DrawDebugSphere(GetWorld(), EntityTargetLocation, 30.f, 40, FColor::Red, false, 0.1, 1, 0);
 	FlockingGrid->TargetLocation = EntityTargetLocation;
 
+
+	for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
+	{
+		EntitiesFlockingData[i].SteerForce = CalculateSteerForce(i);
+		CalculateNewVelocity(i);
+		Entities[i]->UpdateLocation(DeltaTime);
+		//Here you could call for collision avoidance checks and methods (aka tracing collision checks and calculation, not pathfinding)
+	}
+	/*
 	if (!bUseAStarPathfinding)
 	{
 		for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
@@ -98,15 +105,14 @@ void AFlockingBrain::Tick(float DeltaTime)
 	{
 		for (int i = 0 ; i <EntitiesFlockingData.Num(); i++)
 		{
-			
 			//EntitiesFlockingData[i].Location = FlockingGrid->StartLocation;
-			DecideTargetFindingMethod(i);
+			CalculateTargetFollowingForce(i);
 		}
 		
 	}
-
+	*/
 	
-
+	
 	if (!bTimerTarget)
 	{
 		EntityTargetLocation = PlayerCharacter->CurrentTargetLocation;
@@ -160,6 +166,11 @@ void AFlockingBrain::SetGridPointer()
 	ensure (FlockingGrid != nullptr);
 	FlockingGrid->TargetLocation = EntityTargetLocation;
 	bIsGridSet = true;
+	// if no waypoint radius is set - set to half node radius
+	if (WaypointReachedRadius <= 0)
+	{
+		WaypointReachedRadius = FlockingGrid->GetNodeRadius() / 2;
+	}
 }
 
 void AFlockingBrain::SpawnBoids()
@@ -302,7 +313,6 @@ namespace EntityFlockingFunctions
 		{
 			float RampedSpeed = EntityMaxSpeed * (Distance.Length() / DesiredRadiusToTarget);
 			float ClippedSpeed = FMath::Min(RampedSpeed, EntityMaxSpeed);
-			
 			const FVector Desired = (Distance).GetSafeNormal() * ClippedSpeed; 
 			NewSteeringForce = Desired - EntityVelocity;
 		}
@@ -369,9 +379,8 @@ bool AFlockingBrain::IsWithinFieldOfView(float AngleToView, const FVector &Entit
 {
 	// Calculate the angle between the actor's forward vector and the direction vector to the target
 	float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(EntityVelocity.GetSafeNormal(),Direction.GetSafeNormal())));
-
-	/*
-	if (bDebug)
+	
+	if (bDebug && bDebugVision)
 	{
 		FVector ConeOrigin = EntityLocation;
 		FVector ConeDirection = EntityVelocity.GetSafeNormal();
@@ -381,8 +390,6 @@ bool AFlockingBrain::IsWithinFieldOfView(float AngleToView, const FVector &Entit
 		DrawDebugCone(GetWorld(), ConeOrigin, ConeDirection, ConeLength, ConeAngle, ConeAngle, 30, FColor::Red, false, 0.1, 0, 4);
 		DrawDebugSphere(GetWorld(), EntityLocation, DesiredVisionRadius * 2, 15, FColor::Cyan, false, 0.1, 0, 1);
 	}
-	*/
-	
 	// Check if the target is within the specified angle and radius
 	if (AngleDegrees <= AngleToView/ 2 && Direction.Size() <= DesiredVisionRadius * 2 )
 	{
@@ -459,23 +466,51 @@ FVector AFlockingBrain::CalculateCollisionAvoidanceForce(int Index)
 	return FVector::ZeroVector;
 }
 
+
+FVector AFlockingBrain::CalculateForceBasedOnDistance(const int Index, const float Radius, const FVector& CurrentPoint, const FVector& DirectionToPoint)
+{
+	FVector NewForce;
+	const float DistanceToTarget = (CurrentPoint - EntitiesFlockingData[Index].Location).Length();
+
+	if (DistanceToTarget > Radius)
+	{
+		const FVector Desired = DirectionToPoint * EntitiesFlockingData[Index].MaxSpeed;
+		NewForce = Desired - EntitiesFlockingData[Index].Velocity;
+		NewForce /= EntitiesFlockingData[Index].MaxSpeed;
+		NewForce *= EntitiesFlockingData[Index].MaxForce;
+	}
+	else
+	{
+		float RampedSpeed = EntitiesFlockingData[Index].MaxSpeed * (DistanceToTarget / DesiredRadiusToTarget);
+		float ClippedSpeed = FMath::Min(RampedSpeed, EntitiesFlockingData[Index].MaxSpeed);
+
+		const FVector Desired = DirectionToPoint * ClippedSpeed;
+		NewForce = Desired - EntitiesFlockingData[Index].Velocity;
+		NewForce /= EntitiesFlockingData[Index].MaxSpeed;
+		NewForce *= EntitiesFlockingData[Index].MaxForce;
+	}
+
+	return NewForce;
+}
+
 /** Calculates path following force when using flow field pathfinding, by getting direction of current node and then calculating a force that steers the entity towards the flow field direction */
 // Improvements: adjust the force magnitude based on the entity's proximity to the path. For example, if the entity is close to the path, reduce the magnitude of PathFollowingForce.
 // Could be done by calculating the distance to the nearest point on the path, adjusting the scaling factor based on the distance to the path eg FMath::Lerp or any other curve to define how the scaling factor changes with distance
-FVector AFlockingBrain::CalculatePathFollowingForce(int Index)
+FVector AFlockingBrain::CalculateFlowFieldPathfindingForce(int Index)
 {
 	ensure (FlockingGrid != nullptr);
-	FVector PathFollowingForce;
 
+	FVector PathFollowingForce;
 	// Check if the entity is inside the flow field
 	const FVector CurrentLocation = EntitiesFlockingData[Index].Location;
 	// Get the direction from the flow field
-	const FVector MoveDir = FlockingGrid->GetDirectionBasedOnWorldLocation(CurrentLocation).GetSafeNormal();
+	const FVector MoveDirection = FlockingGrid->GetDirectionBasedOnWorldLocation(CurrentLocation).GetSafeNormal();
 	const float DistanceToTarget = (EntityTargetLocation - CurrentLocation).Length(); 
-	
-	if (DistanceToTarget >= DesiredRadiusToTarget)
+
+	//return CalculateForceBasedOnDistance(Index, DesiredRadiusToTarget, CurrentLocation, MoveDirection);
+	if (DistanceToTarget >= DesiredRadiusToTarget) // DET HÄR SKA VARA EN SEPARAT METOD
 	{
-		const FVector Desired = MoveDir * EntitiesFlockingData[Index].MaxSpeed; 
+		const FVector Desired = MoveDirection * EntitiesFlockingData[Index].MaxSpeed; 
 		PathFollowingForce = Desired - EntitiesFlockingData[Index].Velocity;
 		PathFollowingForce /= EntitiesFlockingData[Index].MaxSpeed;
 		PathFollowingForce *= EntitiesFlockingData[Index].MaxForce;
@@ -485,15 +520,65 @@ FVector AFlockingBrain::CalculatePathFollowingForce(int Index)
 	{
 		float RampedSpeed = EntitiesFlockingData[Index].MaxSpeed * (DistanceToTarget / DesiredRadiusToTarget);
 		float ClippedSpeed = FMath::Min(RampedSpeed, EntitiesFlockingData[Index].MaxSpeed);
-			
-		const FVector Desired = MoveDir * ClippedSpeed; 
+		const FVector Desired = MoveDirection * ClippedSpeed; 
 		PathFollowingForce = Desired - EntitiesFlockingData[Index].Velocity;
+		PathFollowingForce /= EntitiesFlockingData[Index].MaxSpeed;
+		PathFollowingForce *= EntitiesFlockingData[Index].MaxForce;
+	
 	}
 
 	return PathFollowingForce;
 }
 
-FVector AFlockingBrain::DecideTargetFindingMethod(int Index)
+FVector AFlockingBrain::CalculateAStarPathfindingForce(int Index)
+{
+	ensure (FlockingGrid != nullptr);
+	
+	EntitiesFlockingData[Index].PathWaypointIndex = 0;
+
+	
+	TArray<FVector> Waypoints;
+
+	if (EntitiesFlockingData[Index].bIsLeader)
+	{
+		Waypoints = FlockingGrid->RequestPath(EntitiesFlockingData[Index].Location, EntityTargetLocation);
+	}else
+	{
+		Waypoints = FlockingGrid->RequestPath(EntitiesFlockingData[Index].Location, FlockingGrid->StartLocation);
+	}
+	
+	
+	// Check if the entity has reached the current waypoint.
+	//FVector CurrentWaypoint = FlockingGrid->GetWaypointAtIndex(EntitiesFlockingData[Index].PathWaypointIndex, Waypoints);
+	if (Waypoints.Num() <= 0)
+	{
+		return FVector::One();
+	}
+	FVector CurrentWaypoint = Waypoints[EntitiesFlockingData[Index].PathWaypointIndex];
+
+	if (bDebug) DrawDebugSphere(GetWorld(), CurrentWaypoint, 30.f, 40, FColor::Green, false, 3, 1, 0);
+	
+	FVector DirectionToWaypoint = (CurrentWaypoint - EntitiesFlockingData[Index].Location).GetSafeNormal();
+	const float DistanceToWaypoint = DirectionToWaypoint.Length();
+	
+	//CurrentLocation is close enough to NextWaypoint
+	if (DistanceToWaypoint < 0.1f) {
+		// Entity has reached the current waypoint
+		EntitiesFlockingData[Index].PathWaypointIndex++;
+		
+		// Check if there are more waypoints left
+		if (EntitiesFlockingData[Index].PathWaypointIndex <= Waypoints.Num())
+		{
+			//CurrentWaypoint = FlockingGrid->GetWaypointAtIndex(EntitiesFlockingData[Index].PathWaypointIndex, Waypoints);
+			CurrentWaypoint = Waypoints[EntitiesFlockingData[Index].PathWaypointIndex];
+		}
+		DirectionToWaypoint = (CurrentWaypoint - EntitiesFlockingData[Index].Location).GetSafeNormal();
+	}
+
+	return CalculateForceBasedOnDistance(Index, 0.1f, CurrentWaypoint, DirectionToWaypoint);
+}
+
+FVector AFlockingBrain::CalculateTargetFollowingForce(int Index)
 {
 	FVector TargetFindingForce;
 	if (bUseFlowFieldPathfinding)
@@ -501,23 +586,17 @@ FVector AFlockingBrain::DecideTargetFindingMethod(int Index)
 		bUseAStarPathfinding = false;
 		FlockingGrid->bUseFlowFillAlgorithm = true;
 		FlockingGrid->bUseAStarAlgorithm = false;
-		TargetFindingForce = CalculatePathFollowingForce(Index);
+		TargetFindingForce = CalculateFlowFieldPathfindingForce(Index);
 	}
-	else if (bUseAStarPathfinding)
+	else if(bUseAStarPathfinding)
 	{
 		bUseFlowFieldPathfinding = false;
 		FlockingGrid->bUseFlowFillAlgorithm = false;
 		FlockingGrid->bUseAStarAlgorithm = true;
-		FlockingGrid->StartLocation = EntitiesFlockingData[Index].Location;
 		FlockingGrid->TargetLocation = EntityTargetLocation;
-
-
-		//TargetFindingForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
-
-		// add a*pathfinding method;
-		//TargetFindingForce = EntityFlockingFunctions::CalculateSeekForce(EntitiesFlockingData[Index].TargetLocation, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, EntitiesFlockingData[Index].MaxSpeed, EntitiesFlockingData[Index].MaxForce, DesiredVisionRadius);
-
-		
+	
+		EntitiesFlockingData[Index].bIsFollowingPath = true;
+		TargetFindingForce = CalculateAStarPathfindingForce(Index);
 	}
 	else
 	{
@@ -529,7 +608,6 @@ FVector AFlockingBrain::DecideTargetFindingMethod(int Index)
 }
 
 
-
 FVector AFlockingBrain::CalculateSteerForce(const int Index)
 {
 	int Counter = 0;
@@ -538,22 +616,22 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 	FVector TotalVelocity = FVector::ZeroVector;
 
 	ensure(Entities[Index] != nullptr);
-		
 	EntitiesFlockingData[Index].TargetLocation = EntityTargetLocation;
+	
+	int LeaderIndex = Index;
+
+	// here you can add and check if entity is leader, and then make A* path-following calculations only for that entity and the rest would get assigned waypoints
+	// would be more effective performance-wise, but entities would risk colliding with other objects.
 	EntitiesFlockingData[Index].bIsLeader = false;
 
-	int LeaderIndex = Index;
-	const FVector CurrentSeekForce = DecideTargetFindingMethod(Index);
 	for (int i = 0; i < EntitiesFlockingData.Num(); i++)
 	{
-		// here you can add and check if entity is leader, and then make path-following or seeking-target calculations only for that entity
-		// would be more effective performance-wise, but entities will risk collision with objects
 		if (EntitiesFlockingData[Index].DistanceToTarget > EntitiesFlockingData[i].DistanceToTarget) LeaderIndex = i;
 		
 		ensure(Entities[Index]->FlockingActorData != nullptr);
 		if (EntitiesFlockingData[Index].ID == EntitiesFlockingData[i].ID) { continue; }
+		
 		const FVector DirectionToNeighbour = (EntitiesFlockingData[i].Location - EntitiesFlockingData[Index].Location);
-
 		if (IsWithinFieldOfView(NeighbourFieldOfViewAngle, EntitiesFlockingData[Index].Location, EntitiesFlockingData[Index].Velocity, DirectionToNeighbour) /* narrow view to see neighbours to current target location*/)
 		{		 
 			if (DirectionToNeighbour.Length() < DesiredVisionRadius * 2) 
@@ -568,6 +646,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index)
 	}
 	EntitiesFlockingData[LeaderIndex].bIsLeader = true;
 	FlockingGrid->StartLocation = EntitiesFlockingData[LeaderIndex].Location;
+	const FVector CurrentSeekForce  = CalculateTargetFollowingForce(Index);
 	EntitiesFlockingData[Index].NumNeighbours = Counter;
 
 	Separation = EntityFlockingFunctions::CalculateSeparationForce(Counter, TotalSeparationForce);

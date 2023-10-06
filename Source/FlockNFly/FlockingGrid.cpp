@@ -6,6 +6,8 @@
 #include "FlockNFlyCharacter.h"
 #include "Pathfinder.h"
 #include "Kismet/GameplayStatics.h"
+#include "Algo/Reverse.h"
+
 
 // Sets default values
 AFlockingGrid::AFlockingGrid()
@@ -25,6 +27,8 @@ void AFlockingGrid::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//SetActorTickEnabled(false);
+
 	NodeDiameter = NodeRadius * 2;
 	
 	CreateGrid();
@@ -33,76 +37,154 @@ void AFlockingGrid::BeginPlay()
 
 	PlayerCharacter = Cast<AFlockNFlyCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 
-	if(bDebug) OnDebugDraw();
+	if(bDebug)
+	{
+		GetWorldTimerManager().SetTimer(DebugDrawTimerHandle, this, &AFlockingGrid::OnDebugDraw, 0.1f, false, -1);
+	}
 	ensure (PlayerCharacter != nullptr);
+
+	GetWorldTimerManager().SetTimer(StartPathfindingTimerHandle, this, &AFlockingGrid::OnStartPathfinding, 0.1f, false, 0.1f);
+
+}
+
+TArray<FVector> AFlockingGrid::RequestPath( FVector &Start,  FVector &End)
+{
+	TArray<FVector> NewPath;
+	if (FlockingPathfinder->FindPath(Start, End))
+	{
+		NewPath = FlockingPathfinder->WayPoints;
+	}
+	else
+	{
+		NewPath = FlockingPathfinder->OldWayPoints;
+	}
+	
+	Algo::Reverse(NewPath);
+	if (bDebug) OnDebugPathDraw(NewPath);
+	return NewPath;
+	/*
+	NewPath = FlockingPathfinder->FindPath(Start, End);
+	if (NewPath.Num() != 0)
+	{
+		Algo::Reverse(NewPath);
+		if (bDebug)
+		{
+			OnDebugPathDraw(NewPath);
+		}
+	}
+		
+	return NewPath;
+	*/
+}
+
+void AFlockingGrid::OnStartPathfinding()
+{
+	bCanStartPathfinding = true;
 }
 
 
 // Called every frame
 void AFlockingGrid::Tick(float DeltaTime)
 {
+	if (!bCanStartPathfinding) return;
+	if (!bAllNodesAdded) return;
 	
 	if (bUseFlowFillAlgorithm && !bUseAStarAlgorithm)
 	{
-
-		UE_LOG(LogTemp, Warning, TEXT("flow"));
-
 		FlockingPathfinder->UpdateNodesFlowField();
-
 	}
+
+	/*
 	else if(!bUseFlowFillAlgorithm && bUseAStarAlgorithm)
 	{
-		//FlockingPathfinder->TargetLocation =
-		
-
 		FlockingPathfinder->FindPath();
-
 	}
-}
-
-
-void AFlockingGrid::OnPathFound()
-{
-	OnDebugPathDraw();
-
-	if (FlockingPathfinder->bHasPath)
+	
+	
+	if (bDebug)
 	{
-		for( FlockingNode* Node : FlockingPathfinder->Path)
+		if (PathWaypoints.Num() > 0)
 		{
-			ensure(Node != nullptr);
-			FVector Waypoint = Node->GetWorldCoordinate();
-			AStarPath.Add(Waypoint);
+			OnDebugPathDraw();
 		}
 	}
-	// säga till brain eller bara låta den loopa, bool som sätter igång det
+	*/
 }
 
 
-void AFlockingGrid::OnDebugPathDraw()
+void AFlockingGrid::OnUpdatedPathFound()
 {
-	FlockingNode* SNode = GetNodeFromGrid(StartLocation.X, StartLocation.Y, StartLocation.Z);
-	FlockingNode* TNode = GetNodeFromGrid(TargetLocation.X, TargetLocation.Y, TargetLocation.Z);
-
-
-	DrawDebugBox(GetWorld(), SNode->GetWorldCoordinate(), FVector(NodeDiameter, NodeDiameter, NodeDiameter), FColor::Blue, true);
-	DrawDebugBox(GetWorld(), TNode->GetWorldCoordinate(), FVector(NodeDiameter, NodeDiameter, NodeDiameter), FColor::Green, true);
-
-	
 	if (FlockingPathfinder->bHasPath)
 	{
-		for( FlockingNode* Node : FlockingPathfinder->Path)
+		if (!FlockingPathfinder->bIsOldPathStillValid)
 		{
-			ensure(Node != nullptr);
-			DrawDebugSphere(GetWorld(), Node->GetWorldCoordinate(), NodeRadius, 10, FColor::Black);
+			UE_LOG(LogTemp, Warning, TEXT("Updated path in grid"));
+			//PathWaypoints = FlockingPathfinder->WayPoints;
+			//PathWaypoints = ListOfPoints;
+			//Algo::Reverse(PathWaypoints);
+			bHasUpdatedPath = true;
+		}
+	}
+}
 
+
+void AFlockingGrid::OnNoNeedUpdate()
+{
+	bHasUpdatedPath = false;
+}
+
+float AFlockingGrid::GetNodeRadius() const 
+{
+	return NodeRadius;
+}
+
+
+bool AFlockingGrid::PathSuccessful(TArray<FVector> PathWaypoints) const
+{
+	return PathWaypoints.Num() > 0;
+}
+
+
+FVector AFlockingGrid::GetWaypointAtIndex(int Index, TArray<FVector> PathWaypoints) const
+{
+	if (Index >= 0 && Index < PathWaypoints.Num())
+	{
+		return PathWaypoints[Index];
+	}
+	// Return an invalid vector if the index is out of range.
+	UE_LOG(LogTemp, Warning, TEXT("Invalid index"));
+	return FVector::ZeroVector;
+}
+
+bool AFlockingGrid::IsWaypointAtIndexValid(int Index, TArray<FVector> PathWaypoints) const
+{
+	return Index >= 0 && Index < PathWaypoints.Num();
+}
+
+
+int AFlockingGrid::GetPathLength(TArray<FVector> PathWaypoints) const
+{
+	return PathWaypoints.Num();
+}
+
+void AFlockingGrid::OnDebugPathDraw(TArray<FVector> PathWaypoints)
+{
+	
+	if (PathWaypoints.Num() != 0)
+	{
+		for(FVector Loc  : PathWaypoints)
+		{
+			auto Node = GetNodeFromWorldLocation(Loc); 
+			ensure(Node != nullptr);
+			DrawDebugSphere(GetWorld(), Node->GetWorldCoordinate(), NodeRadius, 10, FColor::Black, false, 0.1);
 		}
 	}
 
 	auto Node = GetNodeFromWorldLocation(TargetLocation); 
-	DrawDebugSphere(GetWorld(), Node->GetWorldCoordinate(), NodeDiameter, 10, FColor::Cyan);
+	DrawDebugSphere(GetWorld(), Node->GetWorldCoordinate(), NodeDiameter, 10, FColor::Cyan, false, 0.1);
 
 	auto StartNode = GetNodeFromWorldLocation(StartLocation); 
-	DrawDebugSphere(GetWorld(), Node->GetWorldCoordinate(), NodeDiameter, 10, FColor::Cyan);
+	DrawDebugSphere(GetWorld(), StartNode->GetWorldCoordinate(), NodeDiameter, 10, FColor::Purple, false, 0.1);
 
 }
 
@@ -149,7 +231,8 @@ void AFlockingGrid::CreateGrid()
 			}
 		}
 	}
-	OverlapActor->Destroy(); 
+	OverlapActor->Destroy();
+	bAllNodesAdded = true;
 }
 
 void AFlockingGrid::AddToArray(const int IndexX, const int IndexY, const int IndexZ, const FlockingNode Node)

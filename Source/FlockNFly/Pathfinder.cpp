@@ -43,7 +43,7 @@ namespace NodeFunctions
 		}
 	}
 
-	/*
+	
 	TArray<FVector> SimplifyPath(const TArray<FlockingNode*>& Path)
 	{
 		TArray<FVector> Waypoints;
@@ -64,9 +64,10 @@ namespace NodeFunctions
 
 		return Waypoints;
 	}
-	*/
 
-	TArray<FlockingNode*> RetracePath(const FlockingNode* NodeA,  FlockingNode* NodeB)
+
+	//TArray<FlockingNode*> RetracePath(const FlockingNode* NodeA,  FlockingNode* NodeB)
+	TArray<FVector> RetracePath(const FlockingNode* NodeA,  FlockingNode* NodeB)
 	{
 		TArray<FlockingNode*> Path;
 		FlockingNode* Current = NodeB;
@@ -76,12 +77,10 @@ namespace NodeFunctions
 			Path.Add(Current);
 			Current = Current->ParentNode;
 		}
-		//TArray<FVector> Waypoints = SimplifyPath(Path);
-		return Path;
+		TArray<FVector> Waypoints = SimplifyPath(Path);
+		return Waypoints;
 	}
-	
-	
-	
+
 	/**Checks if moving from Current to NextNode would be a diagonal move, if any coordinate is same in Next och Current there is no diagonal move */
 	bool IsMovingDiagonally(const FlockingNode* Current, const FlockingNode* Next)
 	{
@@ -113,6 +112,7 @@ void Pathfinder::UpdateNodesFlowField()
 	TSet<FlockingNode*> Visited;
 
 	NotVisited.Add(TargetNode);
+	TargetNode->SetIsInVisited(false);
 
 	while(!NotVisited.IsEmpty())
 	{
@@ -120,7 +120,7 @@ void Pathfinder::UpdateNodesFlowField()
 		FlockingNode* Current = NotVisited[0];
 		NotVisited.RemoveAt(0);
 		Visited.Add(Current);
-		//Current->SetIsInVisited(true);
+		Current->SetIsInVisited(true);
 
 		for (FlockingNode* Neighbour : Grid->GetNeighbours(Current))
 		{
@@ -143,7 +143,7 @@ void Pathfinder::UpdateNodesFlowField()
 				//if (!Neighbour->IsInVisited())
 				{
 					NotVisited.Add(Neighbour);
-					//Neighbour->SetIsInVisited(false);
+					Neighbour->SetIsInVisited(false);
 				}
 
 				Neighbour->SetFlowFieldCost(NewNeighbourCost);
@@ -154,24 +154,36 @@ void Pathfinder::UpdateNodesFlowField()
 	bIsDirectionInUnWalkableNodesSet = true; // set to true so it is only checked/set once 
 }
 
-
-void Pathfinder::FindPath()
+bool Pathfinder::FindPath(FVector &Start, FVector &End)
 {
-	if (Grid->TargetLocation == FVector::ZeroVector || Grid->StartLocation == FVector::ZeroVector)
+	TArray<FVector> NewPath;
+	//if (Grid->TargetLocation == FVector::ZeroVector || Grid->StartLocation == FVector::ZeroVector)
+	if (Start == FVector::ZeroVector || End == FVector::ZeroVector)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("locations are 0"));
-		return;
+		return false;
 	}
 
-	TargetLocation = PlayerCharacter->CurrentTargetLocation;
-	FlockingNode* StartNode = Grid->GetNodeFromWorldLocation(Grid->StartLocation);
-	FlockingNode* EndNode = Grid->GetNodeFromWorldLocation(TargetLocation);
-	//If target has not moved, updating path is redundant
-	//if(EndNode == OldEndNode) return;
-	//if (StartNode == OldStartNode) return;
+	//TargetLocation = PlayerCharacter->CurrentTargetLocation;
+	//FlockingNode* StartNode = Grid->GetNodeFromWorldLocation(Grid->StartLocation);
+	///FlockingNode* EndNode = Grid->GetNodeFromWorldLocation(TargetLocation);
 
-	//if(!bHasResetAStarNodeCosts) ResetAStarNodeCosts();
+	FlockingNode* StartNode = Grid->GetNodeFromWorldLocation(Start);
+	FlockingNode* EndNode = Grid->GetNodeFromWorldLocation(End);
 
+
+	ensure(StartNode != nullptr);
+	ensure(EndNode != nullptr);
+	
+	//If target and entity has not moved, updating path is redundant
+	if(EndNode == OldEndNode && StartNode == OldStartNode)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Didnt need updating path"));
+		bIsOldPathStillValid = true;
+		Grid->OnNoNeedUpdate();
+		return false;
+	}
+	
 	OldEndNode = EndNode;
 	OldStartNode = StartNode;
 
@@ -182,59 +194,49 @@ void Pathfinder::FindPath()
 
 	bool bPathSuccess = false;
 
-	if (StartNode->bWalkable && EndNode->bWalkable)
+	// here you could check that startnode is walkable as well, but because the flocking entities have a float-like behaviour sometimes
+	// they wouldnt be able to get out of collision if they were in one. 
+	if (EndNode->bWalkable)
 	{
 		// Create open and closed sets, should probably be something else or not created every time
-		//OpenSet = new FlockingHeap(Grid->GetGridMaxSize());
-		TArray<FlockingNode*> OpenSet;
+		FlockingHeap OpenSet = FlockingHeap(Grid->GetGridMaxSize());
 		TSet<FlockingNode*> ClosedSet;
 
 		OpenSet.Add(StartNode);
-
-		ensure(StartNode != nullptr);
 		StartNode->SetIsInOpenSet(true);
-		
-		
-		while (OpenSet.Num() > 0)
+
+		//int Counter = 0;
+		while (OpenSet.Count() > 0)
 		{
+			//Counter++;
+			//ensure(Counter < 2000);
+			
 	        // Find the node in the open set with the lowest FCost
-
-			//FlockingNode* CurrentNode = OpenSet->RemoveFirst();
-			FlockingNode* CurrentNode = OpenSet[0];
-
-			// dumma lösningen
-			for (int i = 1; i < OpenSet.Num(); i++)
-			{
-				if (OpenSet[i]->FCost < CurrentNode->FCost ||OpenSet[i]->FCost == CurrentNode->FCost && OpenSet[i]->HCost < CurrentNode->HCost)
-				{
-					CurrentNode = OpenSet[i];
-				}
-			}
-
-			OpenSet.Remove(CurrentNode); // dumma lösningnen
+			FlockingNode* CurrentNode = OpenSet.RemoveFirst();
+			
 			ClosedSet.Add(CurrentNode);
 
 	        // If the current node is the end node, path found
 	        if (CurrentNode == EndNode)
 	        {
 	        	bPathSuccess = true;
-		        UE_LOG(LogTemp, Warning, TEXT("PathFound"));
+	        	bIsOldPathStillValid = false;
+	        	UE_LOG(LogTemp, Warning, TEXT("New PathFound"));
 				break;
-
 	        }
 
 	        // Iterate through the neighbors of the current node
 	        for (FlockingNode* Neighbour : Grid->GetNeighbours(CurrentNode))
 	        {
 	            // Skip unwalkable or nodes in the closed set
+	        	ensure (Neighbour != nullptr);
 	            if (!Neighbour->IsWalkable() || ClosedSet.Contains(Neighbour))
 	            {
 	                continue;
 	            }
 	        	
 	            // Calculate tentative GCost from the start node to this neighbor
-		        //CurrentNode->SetGCost(NodeFunctions::GetCostToNode(CurrentNode, Neighbour));
-	            int NewMovementCostToNeighbour = CurrentNode->GetGCost() + NodeFunctions::GetDistanceBetweenNodes(CurrentNode, Neighbour);
+	            int NewMovementCostToNeighbour = CurrentNode->GetGCost() + NodeFunctions::GetDistanceBetweenNodes(CurrentNode, Neighbour) + CurrentNode->MovementPenalty;
 	            // If this path is better than the previous one, update the neighbor
 	            if (NewMovementCostToNeighbour < Neighbour->GetGCost() || !OpenSet.Contains(Neighbour))
 	            {
@@ -247,72 +249,29 @@ void Pathfinder::FindPath()
 	                if (!OpenSet.Contains(Neighbour))
 	                {
 	                	OpenSet.Add(Neighbour);
-                		//Neighbour->SetIsInOpenSet(true);
 	                }
-	            	/*
             		else
             		{
             			OpenSet.UpdateItem(Neighbour);
             		}
-	            	*/
 	            }
 	        }
 		}
 	}
 	if (bPathSuccess)
 	{
-		Path = NodeFunctions::RetracePath(StartNode, EndNode);
 		bHasPath = true;
-		//Grid->OnDebugPathDraw();
-		Grid->OnPathFound();
+		OldWayPoints = WayPoints;
+		WayPoints = NodeFunctions::RetracePath(StartNode, EndNode);
+		return true;
+		//Grid->OnUpdatedPathFound(WayPoints);
 	}
 	else
 	{
-		// OnGridpaht not found? Känns konstigt
+		bHasPath = false;
+		return false;
 	}
 }
-	
-// Helper function to find the node with the lowest FCost in the open set
-FlockingNode* Pathfinder::FindLowestFCostNode(const TArray<FlockingNode*>& NewSet)
-{
-	FlockingNode* LowestFCostNode = nullptr;
-	float LowestFCost = MAX_FLT;
-
-	for (FlockingNode* Node : NewSet)
-	{
-		ensure(Node != nullptr);
-		if (Node->GetFCost() < LowestFCost)
-		{
-			LowestFCost = Node->GetFCost();
-			LowestFCostNode = Node;
-		}
-	}
-
-	ensure(LowestFCostNode != nullptr);
-	return LowestFCostNode;
-
-	/*
-	// to find lowest cost, set lowest cost to max value
-	int LowestCostAwayFromNode = INT_MAX;
-	// check all neighbours. If naiogbour has a lower cost than lowest and is walkable, set direction to it
-	for (FlockingNode* NeighboursNeighbour : Grid->GetNeighbours(NeighbourNode))
-	{
-		const int CostToNeighbour = NodeFunctions::GetCostToNode(NeighbourNode, NeighboursNeighbour);
-		if (NeighboursNeighbour->IsWalkable() && CostToNeighbour < LowestCostAwayFromNode)
-		{
-			NeighbourNode->SetDirection(NeighboursNeighbour);
-			LowestCostAwayFromNode = CostToNeighbour;
-		}
-	}
-	*/
-}
-
-float Pathfinder::DistanceBetweenNodes(const FlockingNode* NodeA, const FlockingNode* NodeB)
-{
-	return FVector::Distance(NodeA->GetWorldCoordinate(), NodeB->GetWorldCoordinate());
-}
-
-
 void Pathfinder::ResetFlowFieldNodeCosts()
 {
 	for(int x = 0; x < Grid->GridLengthX; x++)
@@ -326,24 +285,6 @@ void Pathfinder::ResetFlowFieldNodeCosts()
 		}
 	}
 }
-
-void Pathfinder::ResetAStarNodeCosts()
-{
-	for(int x = 0; x < Grid->GridLengthX; x++)
-	{
-		for(int y = 0; y < Grid->GridLengthY; y++)
-		{
-			for(int z = 0; z < Grid->GridLengthZ; z++)
-			{
-				Grid->GetNodeFromGrid(x, y, z)->SetGCost(INT_MAX);
-				Grid->GetNodeFromGrid(x, y, z)->SetHCost(INT_MAX);
-				Grid->GetNodeFromGrid(x, y, z)->SetFCost(INT_MAX);
-			}
-		}
-	}
-	bHasResetAStarNodeCosts = true;
-}
-
 
 void Pathfinder::SetDirectionInUnWalkableNode(FlockingNode* NeighbourNode)
 {
@@ -360,3 +301,132 @@ void Pathfinder::SetDirectionInUnWalkableNode(FlockingNode* NeighbourNode)
 		}
 	}
 }
+
+/*
+void Pathfinder::FindPath()
+{
+	if (Grid->TargetLocation == FVector::ZeroVector || Grid->StartLocation == FVector::ZeroVector)
+	//if (Start == FVector::ZeroVector || End == FVector::ZeroVector)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("locations are 0"));
+		return ;
+	}
+
+	TargetLocation = PlayerCharacter->CurrentTargetLocation;
+	FlockingNode* StartNode = Grid->GetNodeFromWorldLocation(Grid->StartLocation);
+	FlockingNode* EndNode = Grid->GetNodeFromWorldLocation(TargetLocation);
+
+	//FlockingNode* StartNode = Grid->GetNodeFromWorldLocation(Start);
+	//FlockingNode* EndNode = Grid->GetNodeFromWorldLocation(End);
+
+
+	ensure(StartNode != nullptr);
+	ensure(EndNode != nullptr);
+	
+	//If target and entity has not moved, updating path is redundant
+	if(EndNode == OldEndNode && StartNode == OldStartNode)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Didnt need updating path"));
+		bIsOldPathStillValid = true;
+		Grid->OnNoNeedUpdate();
+		return;
+	}
+	
+	OldEndNode = EndNode;
+	OldStartNode = StartNode;
+
+	StartNode->ParentNode = StartNode;
+	StartNode->SetGCost(0.f);
+	StartNode->SetFCost(0.f);
+	StartNode->SetHCost(0.f);
+
+	bool bPathSuccess = false;
+
+	// here you could check that startnode is walkable as well, but because the flocking entities have a float-like behaviour sometimes
+	// they wouldnt be able to get out of collision if they were in one. 
+	if (EndNode->bWalkable)
+	{
+		// Create open and closed sets, should probably be something else or not created every time
+		//OpenSet = new FlockingHeap(Grid->GetGridMaxSize());
+		//TArray<FlockingNode*> OpenSet;
+
+		FlockingHeap OpenSet = FlockingHeap(Grid->GetGridMaxSize());
+		TSet<FlockingNode*> ClosedSet;
+
+		OpenSet.Add(StartNode);
+		
+		StartNode->SetIsInOpenSet(true);
+
+		//int Counter = 0;
+		while (OpenSet.Count() > 0)
+		{
+			//Counter++;
+			//ensure(Counter < 2000);
+			
+	        // Find the node in the open set with the lowest FCost
+			FlockingNode* CurrentNode = OpenSet.RemoveFirst();
+			
+			ClosedSet.Add(CurrentNode);
+
+	        // If the current node is the end node, path found
+	        if (CurrentNode == EndNode)
+	        {
+	        	bPathSuccess = true;
+	        	bIsOldPathStillValid = false;
+	        	UE_LOG(LogTemp, Warning, TEXT("New PathFound"));
+				break;
+	        }
+
+	        // Iterate through the neighbors of the current node
+	        for (FlockingNode* Neighbour : Grid->GetNeighbours(CurrentNode))
+	        {
+	            // Skip unwalkable or nodes in the closed set
+	        	ensure (Neighbour != nullptr);
+	            if (!Neighbour->IsWalkable() || ClosedSet.Contains(Neighbour))
+	            {
+	                continue;
+	            }
+	        	
+	            // Calculate tentative GCost from the start node to this neighbor
+	            int NewMovementCostToNeighbour = CurrentNode->GetGCost() + NodeFunctions::GetDistanceBetweenNodes(CurrentNode, Neighbour) + CurrentNode->MovementPenalty;
+	            // If this path is better than the previous one, update the neighbor
+	            if (NewMovementCostToNeighbour < Neighbour->GetGCost() || !OpenSet.Contains(Neighbour))
+	            {
+	                Neighbour->SetGCost(NewMovementCostToNeighbour);
+	                Neighbour->SetHCost(NodeFunctions::GetDistanceBetweenNodes(Neighbour, EndNode));
+	                Neighbour->SetFCost(Neighbour->GetGCost() + Neighbour->GetHCost());
+	                Neighbour->ParentNode = CurrentNode;
+
+	                // Add the neighbor to the open set if not already there
+	                if (!OpenSet.Contains(Neighbour))
+	                {
+	                	OpenSet.Add(Neighbour);
+	                }
+            		else
+            		{
+            			OpenSet.UpdateItem(Neighbour);
+            		}
+	            }
+	        }
+		}
+	}
+	if (bPathSuccess)
+	{
+		
+		WayPoints = NodeFunctions::RetracePath(StartNode, EndNode);
+		bHasPath = true;
+		Grid->OnUpdatedPathFound();
+	}
+	else
+	{
+		bHasPath = false;
+	}
+}
+
+
+*/
+
+/*
+
+
+ */

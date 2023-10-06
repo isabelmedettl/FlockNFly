@@ -38,7 +38,8 @@ namespace FlockingNodeComparison
 class FLOCKNFLY_API FlockingHeap
 {
 	
-	FlockingNode* Items; 
+	//FlockingNode* Items;
+	TArray<FlockingNode*> Items;
 	int CurrentItemCount = 0;
 	
 
@@ -56,12 +57,12 @@ class FLOCKNFLY_API FlockingHeap
 
 				if (ChildIndexRight < CurrentItemCount)
 				{
-					if (FlockingNodeComparison::IsLessThan(Items[ChildIndexLeft],Items[ChildIndexRight])) SwapIndex = ChildIndexRight;
+					if (FlockingNodeComparison::IsGreaterThan(*Items[ChildIndexLeft],*Items[ChildIndexRight])) SwapIndex = ChildIndexRight;
 				}
 
-                if (FlockingNodeComparison::IsLessThan(*Item,Items[SwapIndex]))
+                if (FlockingNodeComparison::IsGreaterThan(*Item,*Items[SwapIndex]))
 				{
-					Swap(Item, &Items[SwapIndex]);
+					Swap(Item, Items[SwapIndex]);
 				}
 				else {
 					return;
@@ -72,16 +73,18 @@ class FLOCKNFLY_API FlockingHeap
 				return;
 			}
 		}
-}
+	}
 
 	void SortUp(FlockingNode* Item)
 	{
 		int ParentIndex = (Item->HeapIndex - 1) / 2;
 
+		ensure(Items.IsValidIndex(ParentIndex));
 		while (true)
 		{
-			FlockingNode* ParentItem = &Items[ParentIndex];
-            if (FlockingNodeComparison::IsGreaterThan(*Item, *ParentItem))
+			FlockingNode* ParentItem = Items[ParentIndex];
+			ensure(ParentItem != nullptr);
+            if (FlockingNodeComparison::IsLessThan(*Item, *ParentItem))
 			{
 				Swap(Item, ParentItem);
 			}
@@ -90,11 +93,14 @@ class FLOCKNFLY_API FlockingHeap
 				break;
 			}
 			ParentIndex = (Item->HeapIndex - 1) / 2;
+			ensure(Items.IsValidIndex(ParentIndex));
 		}
 	}
 
 	void Swap(FlockingNode* ItemA, FlockingNode* ItemB)
 	{
+		ensure(ItemA != nullptr);
+		ensure(ItemB != nullptr);
 		std::swap(Items[ItemA->HeapIndex], Items[ItemB->HeapIndex]);
 		const int ItemAIndex = ItemA->HeapIndex;
 		ItemA->HeapIndex = ItemB->HeapIndex;
@@ -103,37 +109,43 @@ class FLOCKNFLY_API FlockingHeap
 
 public:
 
+	int MaxHeapSize = 0;
+
 	/** Empty constructor*/
 	FlockingHeap(){}
 
+	/*
 	virtual ~FlockingHeap()
 	{
 		delete [] Items;
 	}
+	*/
 	
-	FlockingHeap(int MaxHeapSize)
+	FlockingHeap(int MHeapSize)
 	{
-		Items = new FlockingNode[MaxHeapSize]; 
-		//Items.Reserve(MaxHeapSize);
+		MaxHeapSize = MHeapSize;
+		Items.SetNum(MaxHeapSize);
+		ensure(Items.Num() == MaxHeapSize);
 		CurrentItemCount = 0;
 	}
 
 	void Add(FlockingNode* Item)
 	{
 		Item->HeapIndex = CurrentItemCount;
-		Items[CurrentItemCount] = *Item;
+		ensure(Items.IsValidIndex(Item->HeapIndex));
+		Items[CurrentItemCount] = Item;
 		SortUp(Item);
 		CurrentItemCount++;
-
 	}
+	
 
 	FlockingNode* RemoveFirst()
 	{
-		FlockingNode* FirstItem = &Items[0];
+		FlockingNode* FirstItem = Items[0];
 		CurrentItemCount--;
 		Items[0] = Items[CurrentItemCount];
-		Items[0].HeapIndex = 0;
-		SortDown(&Items[0]);
+		Items[0]->HeapIndex = 0;
+		SortDown(Items[0]);
 		return FirstItem;
 	}
 
@@ -149,9 +161,13 @@ public:
 
 	bool Contains(FlockingNode* Item) 
 	{
-		return FlockingNodeComparison::IsEqualTo(Items[Item->HeapIndex], *Item);
+		ensure(Item != nullptr);
+		ensure(Items.IsValidIndex(Item->HeapIndex));
+		//ensure(Items[Item->HeapIndex] != nullptr);
+		return Items[Item->HeapIndex] != nullptr && FlockingNodeComparison::IsEqualTo(*Items[Item->HeapIndex], *Item);
 	}
 
+	/*
 	// Overload the [] operator for indexing
 	FlockingNode* operator[](int Index)
 	{
@@ -162,6 +178,6 @@ public:
 	{
 		return &Items[Index];
 	}
-
+	*/
 	
 };

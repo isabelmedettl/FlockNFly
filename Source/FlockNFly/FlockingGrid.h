@@ -17,11 +17,22 @@ class FLOCKNFLY_API AFlockingGrid : public AActor
 
 public:
 
+	TArray<FVector> RequestPath(FVector &Start, FVector &End);
 
-	// remove after debugging
+	/** Timer handle to debug unwalkable nodes and grid, a lot of stuff in begin play can sometimes make nodes not being created fast enough*/
+	FTimerHandle DebugDrawTimerHandle;
 
-	FVector LocStart = FVector::ZeroVector;
-	FVector LocTarget = FVector::ZeroVector;
+	/** Timer handel to start pathfinding, making sure grid and nodes are instantiated before calculations start*/
+	FTimerHandle StartPathfindingTimerHandle;
+
+	/** Method for switching bool to start pathfinding*/
+	void OnStartPathfinding();
+
+	/** bool to start pathfinding */
+	bool bCanStartPathfinding = false;
+
+	bool bAllNodesAdded = false;
+	
 	// Sets default values for this actor's properties
 	AFlockingGrid();
 
@@ -56,23 +67,43 @@ public:
 
 	FVector StartLocation = FVector::ZeroVector;
 
-	void OnDebugPathDraw();
+	void OnDebugPathDraw(TArray<FVector> PathWaypoints);
 
 	/** Gets the max size of grid */
 	int GetGridMaxSize() const
 	{
-		return GridLengthX /NodeDiameter + GridLengthY /NodeDiameter + GridLengthZ /NodeDiameter;
+		return GridLengthX * GridLengthY * GridLengthZ;
 	}
 
-	void OnPathFound();
+	void OnUpdatedPathFound();
 
-	TArray<FVector> AStarPath = TArray<FVector>();;
+	
+
+	bool bHasUpdatedPath = false;
+
+	void OnNoNeedUpdate();
+
+	float GetNodeRadius() const;
+
+
+	/** Get the waypoint at the specified index in the path. */
+	FVector GetWaypointAtIndex(int Index,TArray<FVector> PathWaypoints) const;
+
+	bool IsWaypointAtIndexValid(int Index, TArray<FVector> PathWaypoints) const;
+	
+	/** Get the length of the path (number of waypoints). */
+	int GetPathLength(TArray<FVector> PathWaypoints) const;
+
+	/** Checks if the path has been successfully generated. */
+	bool PathSuccessful(TArray<FVector> PathWaypoints) const;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
+
+	//TArray<FVector> PathWaypoints = TArray<FVector>();
 
 	UPROPERTY(VisibleAnywhere, Category="A*")
 	float MovementPenalty = 400.f;
@@ -95,11 +126,11 @@ private:
 	FVector GridSize = FVector(100, 100, 100);
 	
 	/** Array size x*/
-	int GridLengthX;
+	int GridLengthX = 0;
 	/** Array size x*/
-	int GridLengthY;
+	int GridLengthY = 0;
 	/** Array size x*/
-	int GridLengthZ;
+	int GridLengthZ = 0;
 	
 	FVector GridBottomLeftLocation = FVector::ZeroVector; 
 

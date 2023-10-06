@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FlockingBaseActor.h"
+#include "../../../../../../../../Program Files/Epic Games/UE_5.1/Engine/Platforms/Hololens/Source/Runtime/Core/Public/Microsoft/AllowMicrosoftPlatformTypesPrivate.h"
 #include "GameFramework/Actor.h"
 #include "FlockingBrain.generated.h"
 
@@ -35,6 +36,8 @@ struct FFlockingActorData
 		NumNeighboursTowardTarget = -1;
 		ID = -1;
 		bIsLeader = false;
+		PathWaypointIndex = -1;
+		bIsFollowingPath = false;
 		
 	}
 	/** Current velocity of entity*/
@@ -79,6 +82,11 @@ struct FFlockingActorData
 	/** Flag for leader entity, aka the entity that is closest to current target location*/
 	bool bIsLeader;
 
+	/** Used for A* pathfinding, keeps track on which waypoint index in path its currently moving to */
+	int PathWaypointIndex = 0;
+
+	/** Used for A* pathfinding, checking if entity has finished path or is still following it*/
+	bool bIsFollowingPath = false;
 };
 
 UCLASS()
@@ -97,6 +105,10 @@ public:
 	/** Bool for debugging*/
 	UPROPERTY(EditAnywhere, Category= "Debug")
 	bool bDebug = false;
+
+	/** Bool for debugging radius and vision for entities*/
+	UPROPERTY(EditAnywhere, Category= "Debug")
+	bool bDebugVision = false;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -156,7 +168,7 @@ protected:
 	bool bUseAStarPathfinding = false;
 
 	/** Performs different target-seeking calculation depending on which pathfinding is used. If none are used, entites seek target without checking for collision*/
-	FVector DecideTargetFindingMethod(int Index);
+	FVector CalculateTargetFollowingForce(int Index);
 	
 	/** Array containing Flocking data structs to all active entities, mapped to Entities*/
 	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
@@ -309,7 +321,6 @@ protected:
 
 
 	// ========== Pathfinding ========= //
-	//FlockingNode* CurrentEntityNode = nullptr;
 
 	AFlockingGrid* FlockingGrid = nullptr;
 
@@ -320,13 +331,21 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Pathfinding")
 	float MaxForceForPathFollowing = 3.f;
 
-	FVector CalculatePathFollowingForce(int Index);
+	FVector CalculateForceBasedOnDistance(const int Index, const float Radius, const FVector& CurrentPoint, const FVector& DirectionToPoint);
 
+	FVector CalculateFlowFieldPathfindingForce(int Index);
+
+	FVector CalculateAStarPathfindingForce(int Index);
+	
 	FTimerHandle SetGridPointerHandle;
 
 	void SetGridPointer();
 
 	/** Bool to check if grid is set, otherwise we wait until until it is*/
 	bool bIsGridSet = false;
+
+	/** Used for A*. checking what counts as reaching a waypoint in path. If no other value is set - set to node raduis in grid*/
+	UPROPERTY(EditAnywhere, Category="Pathfinding, Astar", meta=(AllowPrivateAccess = true))
+	float WaypointReachedRadius = -1.f;
 	
 };

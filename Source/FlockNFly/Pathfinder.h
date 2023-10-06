@@ -5,6 +5,7 @@
 class FlockingHeap;
 class AFlockNFlyCharacter;
 class AFlockingGrid;
+class FlockingNode;
 /**
  * 
  */
@@ -16,28 +17,25 @@ public:
 	Pathfinder(APawn* PlayerActor, AFlockingGrid* MapGrid);
 
 	virtual ~Pathfinder();
-	
 
 	/** Method for flow field pathfinding, and aalled each tick from grid class */
 	void UpdateNodesFlowField();
 
 	/** Method for A*, calculating path */
-	void FindPath();
+	bool FindPath(FVector &Start, FVector &End);
+	//void FindPath();
 
-	class FlockingNode* FindLowestFCostNode(const TArray<FlockingNode*>& OpenSet);
+	TArray<FVector> WayPoints;
 
-	float DistanceBetweenNodes(const FlockingNode* NodeA, const FlockingNode* NodeB);
-
-	TArray<FlockingNode*> Path;
+	TArray<FVector> OldWayPoints;
 
 	bool bHasPath = false;
 
+	bool bIsOldPathStillValid = false;
+
 	FVector TargetLocation = FVector::ZeroVector;
 private:
-
-	bool bHasResetAStarNodeCosts = false;
-
-	void ResetAStarNodeCosts();
+	
 	APawn* PlayerPawn;
 
 	AFlockNFlyCharacter* PlayerCharacter;
