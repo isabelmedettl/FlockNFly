@@ -60,21 +60,11 @@ TArray<FVector> AFlockingGrid::RequestPath( FVector &Start,  FVector &End)
 	}
 	
 	Algo::Reverse(NewPath);
-	if (bDebug) OnDebugPathDraw(NewPath);
-	return NewPath;
-	/*
-	NewPath = FlockingPathfinder->FindPath(Start, End);
-	if (NewPath.Num() != 0)
+	if (bDebug)
 	{
-		Algo::Reverse(NewPath);
-		if (bDebug)
-		{
-			OnDebugPathDraw(NewPath);
-		}
+		OnDebugPathDraw(NewPath);
 	}
-		
 	return NewPath;
-	*/
 }
 
 void AFlockingGrid::OnStartPathfinding()
@@ -86,29 +76,19 @@ void AFlockingGrid::OnStartPathfinding()
 // Called every frame
 void AFlockingGrid::Tick(float DeltaTime)
 {
-	if (!bCanStartPathfinding) return;
-	if (!bAllNodesAdded) return;
+	if (!bCanStartPathfinding)
+	{
+		return;
+	}
+	if (!bAllNodesAdded)
+	{
+		return;
+	}
 	
 	if (bUseFlowFillAlgorithm && !bUseAStarAlgorithm)
 	{
 		FlockingPathfinder->UpdateNodesFlowField();
 	}
-
-	/*
-	else if(!bUseFlowFillAlgorithm && bUseAStarAlgorithm)
-	{
-		FlockingPathfinder->FindPath();
-	}
-	
-	
-	if (bDebug)
-	{
-		if (PathWaypoints.Num() > 0)
-		{
-			OnDebugPathDraw();
-		}
-	}
-	*/
 }
 
 
@@ -119,9 +99,6 @@ void AFlockingGrid::OnUpdatedPathFound()
 		if (!FlockingPathfinder->bIsOldPathStillValid)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Updated path in grid"));
-			//PathWaypoints = FlockingPathfinder->WayPoints;
-			//PathWaypoints = ListOfPoints;
-			//Algo::Reverse(PathWaypoints);
 			bHasUpdatedPath = true;
 		}
 	}
@@ -172,18 +149,18 @@ void AFlockingGrid::OnDebugPathDraw(TArray<FVector> PathWaypoints)
 	
 	if (PathWaypoints.Num() != 0)
 	{
-		for(FVector Loc  : PathWaypoints)
+		for(const FVector Loc  : PathWaypoints)
 		{
-			auto Node = GetNodeFromWorldLocation(Loc); 
+			const FlockingNode* Node = GetNodeFromWorldLocation(Loc); 
 			ensure(Node != nullptr);
 			DrawDebugSphere(GetWorld(), Node->GetWorldCoordinate(), NodeRadius, 10, FColor::Black, false, 0.1);
 		}
 	}
 
-	auto Node = GetNodeFromWorldLocation(TargetLocation); 
+	const FlockingNode*  Node = GetNodeFromWorldLocation(TargetLocation); 
 	DrawDebugSphere(GetWorld(), Node->GetWorldCoordinate(), NodeDiameter, 10, FColor::Cyan, false, 0.1);
 
-	auto StartNode = GetNodeFromWorldLocation(StartLocation); 
+	const FlockingNode* StartNode = GetNodeFromWorldLocation(StartLocation); 
 	DrawDebugSphere(GetWorld(), StartNode->GetWorldCoordinate(), NodeDiameter, 10, FColor::Purple, false, 0.1);
 
 }
@@ -261,8 +238,7 @@ TArray<FlockingNode*> AFlockingGrid::GetNeighbours(FlockingNode* Node) const
 				const int GridX = Node->GridX + x; 
 				const int GridY = Node->GridY + y;
 				const int GridZ = Node->GridZ + z;
-
-
+				
 				// if any index is out of bounds 
 				if(GridX < 0 || GridX > GridLengthX - 1 || GridY < 0 || GridY > GridLengthY - 1 || GridZ < 0 || GridZ > GridLengthZ - 1) continue;
 
@@ -270,7 +246,6 @@ TArray<FlockingNode*> AFlockingGrid::GetNeighbours(FlockingNode* Node) const
 			}
 		}
 	}
-
 	return Neighbours; 
 }
 
@@ -286,25 +261,21 @@ FlockingNode* AFlockingGrid::GetNodeFromWorldLocation(FVector NodeWorldLocation)
 	const float GridRelativeX = NodeWorldLocation.X  - GridBottomLeftLocation.X; 
 	const float GridRelativeY = NodeWorldLocation.Y - GridBottomLeftLocation.Y;
 	const float GridRelativeZ = NodeWorldLocation.Z - GridBottomLeftLocation.Z;
-
-
+	
 	// checks how many nodes fit in relative position for array indexes 
 	const int x = FMath::Clamp(FMath::RoundToInt((GridRelativeX - NodeRadius) / NodeDiameter), 0, GridLengthX - 1);
 	const int y = FMath::Clamp(FMath::RoundToInt((GridRelativeY - NodeRadius) / NodeDiameter), 0, GridLengthY - 1);
 	const int z = FMath::Clamp(FMath::RoundToInt((GridRelativeZ - NodeRadius) / NodeDiameter), 0, GridLengthZ- 1);
-
-
+	
 	return GetNodeFromGrid(x, y, z);
 }
 
-void AFlockingGrid::OnDebugDraw()
+void AFlockingGrid::OnDebugDraw() const
 {
-
 	// Draw border of grid 
 	DrawDebugBox(GetWorld(), GetActorLocation(), FVector(GridSize.X / 2, GridSize.Y / 2, GridSize.Z / 2), FColor::Red, true);
 
 	// draw each node where unwalkable nodes are red and walkable green
-	int ActualArrayCount = 0; 
 	for(int x = 0; x < GridLengthX; x++)
 	{
 		for(int y = 0; y < GridLengthY; y++)
@@ -318,36 +289,7 @@ void AFlockingGrid::OnDebugDraw()
 					//UE_LOG(LogTemp, Warning, TEXT("Costs %i"), Node->MovementPenalty)
 					DrawDebugBox(GetWorld(), Node->GetWorldCoordinate(), FVector(NodeRadius, NodeRadius, NodeRadius), Color, true);
 				}
-
-				
 			}
 		}
 	}
-	
-
-	
-
-	/*
-
-	if (bUseAStarAlgorithm)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("true"));
-
-		ensure(FlockingPathfinder != nullptr);
-		//if (!FlockingPathfinder->bHasPath) return;
-		
-			
-		DrawDebugSphere(GetWorld(), FlockingPathfinder->TargetLocation, NodeRadius, 100, FColor::Red, true);
-		DrawDebugSphere(GetWorld(), StartLocation, NodeRadius, 100, FColor::Red, true);
-
-		UE_LOG(LogTemp, Warning, TEXT("Loc %f, %f, %f"),FlockingPathfinder->TargetLocation.X, FlockingPathfinder->TargetLocation.Y, FlockingPathfinder->TargetLocation.Z);
-
-		
-	} else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("false"));
-
-	}
-	*/
-	
 }

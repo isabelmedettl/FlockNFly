@@ -77,22 +77,19 @@ public:
 
 	void OnUpdatedPathFound();
 
-	
-
 	bool bHasUpdatedPath = false;
 
 	void OnNoNeedUpdate();
 
 	float GetNodeRadius() const;
-
-
+	
 	/** Get the waypoint at the specified index in the path. */
 	FVector GetWaypointAtIndex(int Index,TArray<FVector> PathWaypoints) const;
 
 	bool IsWaypointAtIndexValid(int Index, TArray<FVector> PathWaypoints) const;
 	
 	/** Get the length of the path (number of waypoints). */
-	int GetPathLength(TArray<FVector> PathWaypoints) const;
+	static int GetPathLength(TArray<FVector> PathWaypoints) const;
 
 	/** Checks if the path has been successfully generated. */
 	bool PathSuccessful(TArray<FVector> PathWaypoints) const;
@@ -144,7 +141,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	bool bDebug = true; 
 	
-	void OnDebugDraw();
+	void OnDebugDraw() const;
 	
 	void CreateGrid();
 

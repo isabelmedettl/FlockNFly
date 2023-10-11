@@ -38,7 +38,6 @@ struct FFlockingActorData
 		bIsLeader = false;
 		PathWaypointIndex = -1;
 		bIsFollowingPath = false;
-		
 	}
 	/** Current velocity of entity*/
 	FVector Velocity;
@@ -168,7 +167,7 @@ protected:
 	bool bUseAStarPathfinding = false;
 
 	/** Performs different target-seeking calculation depending on which pathfinding is used. If none are used, entites seek target without checking for collision*/
-	FVector CalculateTargetFollowingForce(int Index);
+	FVector CalculateTargetFollowingForce(const int Index);
 	
 	/** Array containing Flocking data structs to all active entities, mapped to Entities*/
 	UPROPERTY(VisibleAnywhere, Category= "Spawning", meta =(AllowPrivateAccess = true))
@@ -209,13 +208,11 @@ protected:
 	/** Calculates spawn positions for boids given number of boids and distance between them
 	 */
 	void CalculatePossibleSpawnFormation();
-
-
+	
 	/** Pointer to player character*/
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess = true))
 	AFlockNFlyCharacter* PlayerCharacter;
 	
-
 	void SpawnEntity(const FVector &SpawnLocation, int ID);
 	
 	// ======= Weights and methods for flocking behaviors ========= //
@@ -260,7 +257,6 @@ protected:
 
 	/** Checks if entity is in field of view of another entity*/
 	bool IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const FVector &EntityVelocity, const FVector &Direction) const;
-	
 	
 	/** Target location toward which entities should steer to*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Flocking",meta=(AllowPrivateAccess = true))

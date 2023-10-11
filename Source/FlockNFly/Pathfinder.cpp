@@ -21,11 +21,10 @@ namespace NodeFunctions
 {
 	int GetDistanceBetweenNodes(const FlockingNode* NodeA, const FlockingNode* NodeB)
 	{
-		int DistanceX = FMath::Abs(NodeA->GridX - NodeB->GridX);
-		int DistanceY = FMath::Abs(NodeA->GridY - NodeB->GridY);
-		int DistanceZ = FMath::Abs(NodeA->GridZ - NodeB->GridZ);;
-
-
+		const int DistanceX = FMath::Abs(NodeA->GridX - NodeB->GridX);
+		const int DistanceY = FMath::Abs(NodeA->GridY - NodeB->GridY);
+		const int DistanceZ = FMath::Abs(NodeA->GridZ - NodeB->GridZ);
+		
 		if (DistanceX >= DistanceY && DistanceX >= DistanceZ)
 		{
 			// X is the longest distance
@@ -36,11 +35,8 @@ namespace NodeFunctions
 			// Y is the longest distance
 			return 14 * DistanceX + 10 * (DistanceY - DistanceX) + 14 * DistanceZ;
 		}
-		else
-		{
-			// Z is the longest distance
-			return 14 * DistanceX + 14 * DistanceY + 10 * (DistanceZ - DistanceX);
-		}
+		// Z is the longest distance
+		return 14 * DistanceX + 14 * DistanceY + 10 * (DistanceZ - DistanceX);
 	}
 
 	
@@ -164,14 +160,9 @@ bool Pathfinder::FindPath(FVector &Start, FVector &End)
 		return false;
 	}
 
-	//TargetLocation = PlayerCharacter->CurrentTargetLocation;
-	//FlockingNode* StartNode = Grid->GetNodeFromWorldLocation(Grid->StartLocation);
-	///FlockingNode* EndNode = Grid->GetNodeFromWorldLocation(TargetLocation);
-
 	FlockingNode* StartNode = Grid->GetNodeFromWorldLocation(Start);
 	FlockingNode* EndNode = Grid->GetNodeFromWorldLocation(End);
-
-
+	
 	ensure(StartNode != nullptr);
 	ensure(EndNode != nullptr);
 	
@@ -205,12 +196,8 @@ bool Pathfinder::FindPath(FVector &Start, FVector &End)
 		OpenSet.Add(StartNode);
 		StartNode->SetIsInOpenSet(true);
 
-		//int Counter = 0;
 		while (OpenSet.Count() > 0)
 		{
-			//Counter++;
-			//ensure(Counter < 2000);
-			
 	        // Find the node in the open set with the lowest FCost
 			FlockingNode* CurrentNode = OpenSet.RemoveFirst();
 			
@@ -264,13 +251,9 @@ bool Pathfinder::FindPath(FVector &Start, FVector &End)
 		OldWayPoints = WayPoints;
 		WayPoints = NodeFunctions::RetracePath(StartNode, EndNode);
 		return true;
-		//Grid->OnUpdatedPathFound(WayPoints);
 	}
-	else
-	{
-		bHasPath = false;
-		return false;
-	}
+	bHasPath = false;
+	return false;
 }
 void Pathfinder::ResetFlowFieldNodeCosts()
 {
@@ -301,132 +284,3 @@ void Pathfinder::SetDirectionInUnWalkableNode(FlockingNode* NeighbourNode)
 		}
 	}
 }
-
-/*
-void Pathfinder::FindPath()
-{
-	if (Grid->TargetLocation == FVector::ZeroVector || Grid->StartLocation == FVector::ZeroVector)
-	//if (Start == FVector::ZeroVector || End == FVector::ZeroVector)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("locations are 0"));
-		return ;
-	}
-
-	TargetLocation = PlayerCharacter->CurrentTargetLocation;
-	FlockingNode* StartNode = Grid->GetNodeFromWorldLocation(Grid->StartLocation);
-	FlockingNode* EndNode = Grid->GetNodeFromWorldLocation(TargetLocation);
-
-	//FlockingNode* StartNode = Grid->GetNodeFromWorldLocation(Start);
-	//FlockingNode* EndNode = Grid->GetNodeFromWorldLocation(End);
-
-
-	ensure(StartNode != nullptr);
-	ensure(EndNode != nullptr);
-	
-	//If target and entity has not moved, updating path is redundant
-	if(EndNode == OldEndNode && StartNode == OldStartNode)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Didnt need updating path"));
-		bIsOldPathStillValid = true;
-		Grid->OnNoNeedUpdate();
-		return;
-	}
-	
-	OldEndNode = EndNode;
-	OldStartNode = StartNode;
-
-	StartNode->ParentNode = StartNode;
-	StartNode->SetGCost(0.f);
-	StartNode->SetFCost(0.f);
-	StartNode->SetHCost(0.f);
-
-	bool bPathSuccess = false;
-
-	// here you could check that startnode is walkable as well, but because the flocking entities have a float-like behaviour sometimes
-	// they wouldnt be able to get out of collision if they were in one. 
-	if (EndNode->bWalkable)
-	{
-		// Create open and closed sets, should probably be something else or not created every time
-		//OpenSet = new FlockingHeap(Grid->GetGridMaxSize());
-		//TArray<FlockingNode*> OpenSet;
-
-		FlockingHeap OpenSet = FlockingHeap(Grid->GetGridMaxSize());
-		TSet<FlockingNode*> ClosedSet;
-
-		OpenSet.Add(StartNode);
-		
-		StartNode->SetIsInOpenSet(true);
-
-		//int Counter = 0;
-		while (OpenSet.Count() > 0)
-		{
-			//Counter++;
-			//ensure(Counter < 2000);
-			
-	        // Find the node in the open set with the lowest FCost
-			FlockingNode* CurrentNode = OpenSet.RemoveFirst();
-			
-			ClosedSet.Add(CurrentNode);
-
-	        // If the current node is the end node, path found
-	        if (CurrentNode == EndNode)
-	        {
-	        	bPathSuccess = true;
-	        	bIsOldPathStillValid = false;
-	        	UE_LOG(LogTemp, Warning, TEXT("New PathFound"));
-				break;
-	        }
-
-	        // Iterate through the neighbors of the current node
-	        for (FlockingNode* Neighbour : Grid->GetNeighbours(CurrentNode))
-	        {
-	            // Skip unwalkable or nodes in the closed set
-	        	ensure (Neighbour != nullptr);
-	            if (!Neighbour->IsWalkable() || ClosedSet.Contains(Neighbour))
-	            {
-	                continue;
-	            }
-	        	
-	            // Calculate tentative GCost from the start node to this neighbor
-	            int NewMovementCostToNeighbour = CurrentNode->GetGCost() + NodeFunctions::GetDistanceBetweenNodes(CurrentNode, Neighbour) + CurrentNode->MovementPenalty;
-	            // If this path is better than the previous one, update the neighbor
-	            if (NewMovementCostToNeighbour < Neighbour->GetGCost() || !OpenSet.Contains(Neighbour))
-	            {
-	                Neighbour->SetGCost(NewMovementCostToNeighbour);
-	                Neighbour->SetHCost(NodeFunctions::GetDistanceBetweenNodes(Neighbour, EndNode));
-	                Neighbour->SetFCost(Neighbour->GetGCost() + Neighbour->GetHCost());
-	                Neighbour->ParentNode = CurrentNode;
-
-	                // Add the neighbor to the open set if not already there
-	                if (!OpenSet.Contains(Neighbour))
-	                {
-	                	OpenSet.Add(Neighbour);
-	                }
-            		else
-            		{
-            			OpenSet.UpdateItem(Neighbour);
-            		}
-	            }
-	        }
-		}
-	}
-	if (bPathSuccess)
-	{
-		
-		WayPoints = NodeFunctions::RetracePath(StartNode, EndNode);
-		bHasPath = true;
-		Grid->OnUpdatedPathFound();
-	}
-	else
-	{
-		bHasPath = false;
-	}
-}
-
-
-*/
-
-/*
-
-
- */

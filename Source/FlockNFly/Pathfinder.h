@@ -40,8 +40,6 @@ private:
 
 	AFlockNFlyCharacter* PlayerCharacter;
 
-	
-
 	/** If target not moving, makes it to skip flowfield pathfinding */
 	FlockingNode* OldTargetNode = nullptr;
 
@@ -60,9 +58,5 @@ private:
 	void SetDirectionInUnWalkableNode(FlockingNode* NeighbourNode); 
 
 	bool bIsDirectionInUnWalkableNodesSet = false;
-
-	//friend class FlockingHeap;
-	//FlockingHeap* OpenSet = nullptr;
-	
 };
 
