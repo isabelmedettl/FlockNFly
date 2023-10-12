@@ -170,11 +170,9 @@ void AFlockingBrain::SpawnBoids()
 	{		
 		CalculatePossibleSpawnFormation();
 		
-		int Counter = 0;
 		for (FVector Loc : SpawnLocations)
 		{
-			SpawnEntity(Loc, Counter);
-			Counter++;
+			SpawnEntity(Loc);
 		}
 	}
 }
@@ -218,10 +216,10 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 		EntityRows = FMath::CeilToInt(IdealWidth);
 		
 		// Calculate locations for boids to spawn at in world space, depending on actors placement
-		int StartX = -(EntityColumns - 1) / 2;
-		int EndX = (EntityColumns + 1) / 2;
-		int StartY = -(EntityRows - 1) / 2;
-		int EndY = (EntityRows + 1) / 2;
+		const int StartX = -(EntityColumns - 1) / 2;
+		const int EndX = (EntityColumns + 1) / 2;
+		const int StartY = -(EntityRows - 1) / 2;
+		const int EndY = (EntityRows + 1) / 2;
 		
 		// Spawn boids in calculated locations
 		int Counter = NumberOfEntities;
@@ -240,7 +238,7 @@ void AFlockingBrain::CalculatePossibleSpawnFormation()
 	}
 }
 
-void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int ID)
+void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation)
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -249,9 +247,9 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int ID)
 	ensure (NewFlockingEntity != nullptr);
 	
 	// create struct with flocking data, set variables in struct, assign pointer in spawned entity to that struct in array and add both entity and struct in collections
-	FFlockingActorData NewEntityData;
+	const FFlockingActorData NewEntityData;
 		
-	const int EntityDataIndex = EntitiesFlockingData.Add(NewEntityData); // arrayen får en kopia, här har jag 2 kopior - en i metoden, en i arrayen
+	const int EntityDataIndex = EntitiesFlockingData.Add(NewEntityData);
 	FFlockingActorData &MyFD = EntitiesFlockingData[EntityDataIndex]; 
 	
 	MyFD.ID = EntityDataIndex;
@@ -269,7 +267,7 @@ void AFlockingBrain::SpawnEntity(const FVector &SpawnLocation, int ID)
 
 void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
 {
-	// these can be used if you want a wobbly movement when boids come close to target, where the entities dont stop but paonce around the target. To use - remove first two lines below out-commented code.
+	// these can be used if you want a wobbly movement when boids come close to target, where the entities dont stop but pounce around the target. To use - remove first two lines below out-commented code.
 	const float NewSpeed = EntityFlockingFunctions::CalculateSpeed(EntitiesFlockingData[IndexOfData].TargetLocation, EntitiesFlockingData[IndexOfData].Location, EntitiesFlockingData[IndexOfData].MaxSpeed, DesiredVisionRadius);
 	const float OldSpeed = EntitiesFlockingData[IndexOfData].CurrentSpeed;
 	EntitiesFlockingData[IndexOfData].CurrentSpeed = FMath::Lerp(OldSpeed, NewSpeed, 0.3);
@@ -282,17 +280,17 @@ void AFlockingBrain::CalculateNewVelocity(const int IndexOfData)
 	
 }
 
-bool AFlockingBrain::IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const FVector &EntityVelocity, const FVector &Direction) const
+bool AFlockingBrain::IsWithinFieldOfView(const float AngleToView, const FVector &EntityLocation, const FVector &EntityVelocity, const FVector &Direction) const
 {
 	// Calculate the angle between the actor's forward vector and the direction vector to the target
-	float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(EntityVelocity.GetSafeNormal(),Direction.GetSafeNormal())));
+	const float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(EntityVelocity.GetSafeNormal(),Direction.GetSafeNormal())));
 	
 	if (bDebug && bDebugVision)
 	{
-		FVector ConeOrigin = EntityLocation;
-		FVector ConeDirection = EntityVelocity.GetSafeNormal();
-		float ConeLength = DesiredVisionRadius * 2;
-		float ConeAngle = FMath::DegreesToRadians(AngleToView);
+		const FVector ConeOrigin = EntityLocation;
+		const FVector ConeDirection = EntityVelocity.GetSafeNormal();
+		const float ConeLength = DesiredVisionRadius * 2;
+		const float ConeAngle = FMath::DegreesToRadians(AngleToView);
 
 		DrawDebugCone(GetWorld(), ConeOrigin, ConeDirection, ConeLength, ConeAngle, ConeAngle, 30, FColor::Red, false, 0.1, 0, 4);
 		DrawDebugSphere(GetWorld(), EntityLocation, DesiredVisionRadius * 2, 15, FColor::Cyan, false, 0.1, 0, 1);
@@ -337,15 +335,12 @@ bool AFlockingBrain::CollisionOnPathToTarget(int Index)
 	if (bHit)
 	{
 		FoundObstacle = HitResult;
-		//HitResult.GetActor()->Destroy();
-		//DrawDebugSphere(GetWorld(), TraceLocation, 50.f, 12, FColor::Blue, true, 0.1, 0, 1);
-
 		return true;
 	}
 	return false;
 }
 
-FVector AFlockingBrain::CalculateCollisionAvoidanceForce(int Index)
+FVector AFlockingBrain::CalculateCollisionAvoidanceForce(const int Index)
 {
 	// Vector A, Difference between entities position and  obstacle's position
 	const FVector Difference = FoundObstacle.ImpactPoint - EntitiesFlockingData[Index].Location;
@@ -396,7 +391,7 @@ FVector AFlockingBrain::CalculateForceBasedOnDistance(const int Index, const flo
 /** Calculates path following force when using flow field pathfinding, by getting direction of current node and then calculating a force that steers the entity towards the flow field direction */
 // Improvements: adjust the force magnitude based on the entity's proximity to the path. For example, if the entity is close to the path, reduce the magnitude of PathFollowingForce.
 // Could be done by calculating the distance to the nearest point on the path, adjusting the scaling factor based on the distance to the path eg FMath::Lerp or any other curve to define how the scaling factor changes with distance
-FVector AFlockingBrain::CalculateFlowFieldPathfindingForce(int Index)
+FVector AFlockingBrain::CalculateFlowFieldPathfindingForce(const int Index)
 {
 	ensure (FlockingGrid != nullptr);
 
@@ -425,7 +420,7 @@ FVector AFlockingBrain::CalculateFlowFieldPathfindingForce(int Index)
 	return PathFollowingForce *= EntitiesFlockingData[Index].MaxForce;
 }
 
-FVector AFlockingBrain::CalculateAStarPathfindingForce(int Index)
+FVector AFlockingBrain::CalculateAStarPathfindingForce(const int Index)
 {
 	ensure (FlockingGrid != nullptr);
 	
@@ -441,7 +436,7 @@ FVector AFlockingBrain::CalculateAStarPathfindingForce(int Index)
 	// Check if the entity has reached the current waypoint.
 	if (Waypoints.Num() <= 0) // kolla grid, kanske early return innan
 	{
-		return FVector::One(); // returnera nåt annat än one, returnera en variabel som sträng eller annat som visar att det gick åt helvete
+		return FVector::One(); // returnera nåt annat än one, returnera en variabel som sträng eller annat som visar att det inte gick att beräkna?
 	}
 	FVector CurrentWaypoint = Waypoints[EntitiesFlockingData[Index].PathWaypointIndex];
 
@@ -547,7 +542,7 @@ FVector AFlockingBrain::CalculateSteerForce(const int Index) // bryta ut forloop
 	Alignment = EntityFlockingFunctions::CalculateAlignmentForce(Counter,TotalVelocity);
 	Alignment *= AlignmentWeight;
 	
-	const FVector TotalForce = CurrentSeekForce + Cohesion + Alignment + Separation * SeparationMultiplyer;
+	const FVector TotalForce = CurrentSeekForce + Cohesion + Alignment + Separation * SeparationMultiplier;
 	
 	return TotalForce;
 }

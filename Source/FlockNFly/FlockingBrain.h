@@ -69,7 +69,7 @@ struct FFlockingActorData
 	/** Mass of entity*/
 	float Mass = -1.0f;
 	
-	/** Unique number for idintification*/
+	/** Unique number for identification*/
 	int ID = -1;
 
 	/** Number of neighbours, aka other entities withing field of view of entity*/
@@ -97,7 +97,7 @@ public:
 	// Sets default values for this actor's properties
 	AFlockingBrain();
 	
-	/** Subclass of boid character to be spawned*/
+	/** Subclass of entity actor to be spawned*/
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AFlockingBaseActor> FlockingBaseActorClass;
 
@@ -117,7 +117,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// =========== Debugging and target decisions for debugging =========== //
+	// =========== Debugging and target decisions for debugging =========== // lazy 
 	void ChangeTarget();
 	
 	UPROPERTY(EditAnywhere)
@@ -159,14 +159,14 @@ public:
 	UBoxComponent* Target4Box;
 protected:
 
-	// ======= Bools and methods to adjust the way entities are searching for target location ==== //
+	// ======= Variables and methods to adjust the way entities are searching for target location ==== //
 	UPROPERTY(EditAnywhere, Category="Pathfinding", meta=(AllowPrivateAccess = true))
 	bool bUseFlowFieldPathfinding = false;
 
 	UPROPERTY(EditAnywhere, Category="Pathfinding", meta=(AllowPrivateAccess = true))
 	bool bUseAStarPathfinding = false;
 
-	/** Performs different target-seeking calculation depending on which pathfinding is used. If none are used, entites seek target without checking for collision*/
+	/** Performs different target-seeking calculation depending on which pathfinding is used. If none are used, entities seek target without checking for collision*/
 	FVector CalculateTargetFollowingForce(const int Index);
 	
 	/** Array containing Flocking data structs to all active entities, mapped to Entities*/
@@ -199,7 +199,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Spawning", meta = (AllowPrivateAccess = true))
 	double SpawnHeight = 0.f;
 
-	/** Array containing positions in world space to spawn boid to*/
+	/** Array containing positions in world space to spawn entity to*/
 	TArray<FVector> SpawnLocations = TArray<FVector>();
 
 	/** Spawns specified number of boids in designated spawn area*/
@@ -213,29 +213,29 @@ protected:
 	UPROPERTY(VisibleAnywhere, meta=(AllowPrivateAccess = true))
 	AFlockNFlyCharacter* PlayerCharacter;
 	
-	void SpawnEntity(const FVector &SpawnLocation, int ID);
+	void SpawnEntity(const FVector &SpawnLocation);
 	
 	// ======= Weights and methods for flocking behaviors ========= //
 
-		/** Multiplyer for applying cohesion force*/
+	/** Multiplier for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking", meta=(AllowPrivateAccess = true))
 	int CohesionWeight = 4;
 
-	/** Multiplyer for applying cohesion force*/
+	/** Multiplier for applying cohesion force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking",meta=(AllowPrivateAccess = true))
 	int SeekWeight = 1;
 	
-	/** Multiplyer for applying separation force*/
+	/** Multiplier for applying separation force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking",meta=(AllowPrivateAccess = true))
 	int SeparationWeight = 10;
 
-	/** Multiplyer for applying alignment force*/
+	/** Multiplier for applying alignment force*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking", meta=(AllowPrivateAccess = true))
 	int AlignmentWeight = 2;
 
-	/** Additional multiplyer for separation force when adding separation vector to steer force */
+	/** Additional Multiplier for separation force when adding separation vector to steer force */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Flocking",meta=(AllowPrivateAccess = true))
-	int SeparationMultiplyer = 5;
+	int SeparationMultiplier = 5;
 
 	/** Limits magnitude of velocity vector */
 	UPROPERTY(EditAnywhere, Category="Flocking, Entities", meta=(AllowPrivateAccess = true))
@@ -256,7 +256,7 @@ protected:
 	void CalculateNewVelocity(const int IndexOfData);
 
 	/** Checks if entity is in field of view of another entity*/
-	bool IsWithinFieldOfView(float AngleToView, const FVector &EntityLocation, const FVector &EntityVelocity, const FVector &Direction) const;
+	bool IsWithinFieldOfView(const float AngleToView, const FVector &EntityLocation, const FVector &EntityVelocity, const FVector &Direction) const;
 	
 	/** Target location toward which entities should steer to*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Flocking",meta=(AllowPrivateAccess = true))
@@ -303,14 +303,14 @@ protected:
 	// ========== Collision - Currently not in use ==============//
 
 	/** Checks for collision on leader entities path toward target location*/
-	bool CollisionOnPathToTarget(int Index);
+	bool CollisionOnPathToTarget(const int Index);
 
 	/** Radius defining trace size*/
 	UPROPERTY(EditAnywhere, Category="Collision", meta=(AllowPrivateAccess = true))
 	float TraceRadius = 70.f;
 
 	/** Calculates force to be added to avoid collision in path toward target location*/
-	FVector CalculateCollisionAvoidanceForce(int Index);
+	FVector CalculateCollisionAvoidanceForce(const int Index);
 
 	/** Ref to colliding obstacle*/
 	FHitResult FoundObstacle;
@@ -329,9 +329,9 @@ protected:
 
 	FVector CalculateForceBasedOnDistance(const int Index, const float Radius, const FVector& CurrentPoint, const FVector& DirectionToPoint);
 
-	FVector CalculateFlowFieldPathfindingForce(int Index);
+	FVector CalculateFlowFieldPathfindingForce(const int Index);
 
-	FVector CalculateAStarPathfindingForce(int Index);
+	FVector CalculateAStarPathfindingForce(const int Index);
 	
 	FTimerHandle SetGridPointerHandle;
 
@@ -340,7 +340,7 @@ protected:
 	/** Bool to check if grid is set, otherwise we wait until until it is*/
 	bool bIsGridSet = false;
 
-	/** Used for A*. checking what counts as reaching a waypoint in path. If no other value is set - set to node raduis in grid*/
+	/** Used for A*. checking what counts as reaching a waypoint in path. If no other value is set - set to node radius in grid*/
 	UPROPERTY(EditAnywhere, Category="Pathfinding, Astar", meta=(AllowPrivateAccess = true))
 	float WaypointReachedRadius = -1.f;
 	

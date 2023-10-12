@@ -40,7 +40,7 @@ namespace EntityFlockingFunctions
 		return NewSteeringForce;
 	}
 
-	FVector CalculateSeparationForce(const int Counter, FVector &Separation) // pekare till funktioner?? 
+	FVector CalculateSeparationForce(const int Counter, FVector &Separation) 
 	{
 		if (Counter > 0)
 		{
@@ -52,14 +52,14 @@ namespace EntityFlockingFunctions
 		return FVector::ZeroVector;
 	}
 
-	FVector CalculateCohesionForce(const int Counter,  FVector &CenterOfMass, const FVector &Location) //totalcohesionforce kan vara const, gör kopia på den och skicka tillbaka den, bool/void istället
+	FVector CalculateCohesionForce(const int Counter,  FVector &CenterOfMass, const FVector &Location)
 	{
 		if (Counter > 0)
 		{
 			CenterOfMass /= Counter;
 			FVector TotalCohesionForce = FVector(CenterOfMass.X - Location.X, CenterOfMass.Y - Location.Y, CenterOfMass.Z - Location.Z);
 			TotalCohesionForce.Normalize();
-			return TotalCohesionForce; //returnerar kopia
+			return TotalCohesionForce; 
 		}
 		return FVector::ZeroVector;
 	}

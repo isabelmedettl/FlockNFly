@@ -49,13 +49,13 @@ public:
 	 * @param WorldLocation of the node to check
 	 * @return Direction of node
 	 */
-	FVector GetDirectionBasedOnWorldLocation(const FVector WorldLocation){ return GetNodeFromWorldLocation(WorldLocation)->GetDirection(); }
+	FVector GetDirectionBasedOnWorldLocation(const FVector WorldLocation) const { return GetNodeFromWorldLocation(WorldLocation)->GetDirection(); }
 	
 	/** Returns node on specified location
-	 * @param WorldLocation of the node
+	 * @param NodeWorldLocation of the node
 	 * @return pointer to Node in location
 	 */
-	FlockingNode* GetNodeFromWorldLocation(FVector WorldLocation);
+	FlockingNode* GetNodeFromWorldLocation(const FVector &NodeWorldLocation) const;
 
 	/** Does what the method is called*/
 	FVector GetGridBottomLeftLocation() const { return GridBottomLeftLocation; }
@@ -82,17 +82,7 @@ public:
 	void OnNoNeedUpdate();
 
 	float GetNodeRadius() const;
-	
-	/** Get the waypoint at the specified index in the path. */
-	FVector GetWaypointAtIndex(int Index,TArray<FVector> PathWaypoints) const;
 
-	bool IsWaypointAtIndexValid(int Index, TArray<FVector> PathWaypoints) const;
-	
-	/** Get the length of the path (number of waypoints). */
-	static int GetPathLength(TArray<FVector> PathWaypoints) const;
-
-	/** Checks if the path has been successfully generated. */
-	bool PathSuccessful(TArray<FVector> PathWaypoints) const;
 
 protected:
 	// Called when the game starts or when spawned

@@ -47,13 +47,12 @@ class FLOCKNFLY_API FlockingHeap
 	{
 		while (true)
 		{
-			int ChildIndexLeft = Item->HeapIndex * 2 + 1;
-			int ChildIndexRight = Item->HeapIndex * 2 + 2;
-			int SwapIndex = 0;
+			const int ChildIndexLeft = Item->HeapIndex * 2 + 1;
+			const int ChildIndexRight = Item->HeapIndex * 2 + 2;
 
 			if (ChildIndexLeft < CurrentItemCount)
 			{
-				SwapIndex = ChildIndexLeft;
+				int SwapIndex = ChildIndexLeft;
 
 				if (ChildIndexRight < CurrentItemCount)
 				{
@@ -159,25 +158,11 @@ public:
 		return CurrentItemCount;
 	}
 
-	bool Contains(FlockingNode* Item) 
+	bool Contains(const FlockingNode* Item) 
 	{
 		ensure(Item != nullptr);
 		ensure(Items.IsValidIndex(Item->HeapIndex));
 		//ensure(Items[Item->HeapIndex] != nullptr);
 		return Items[Item->HeapIndex] != nullptr && FlockingNodeComparison::IsEqualTo(*Items[Item->HeapIndex], *Item);
 	}
-
-	/*
-	// Overload the [] operator for indexing
-	FlockingNode* operator[](int Index)
-	{
-		return &Items[Index];
-	}
-
-	const FlockingNode* operator[](int Index) const
-	{
-		return &Items[Index];
-	}
-	*/
-	
 };

@@ -4,10 +4,8 @@
 #include "FlockingBaseActor.h"
 
 #include "FlockingBrain.h"
-#include "FlockNFlyCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AFlockingBaseActor::AFlockingBaseActor()
@@ -21,16 +19,12 @@ AFlockingBaseActor::AFlockingBaseActor()
 
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
 	CollisionComponent->SetupAttachment(FlockingMeshComponent);
-	
-	
 }
 
 // Called when the game starts or when spawned
 void AFlockingBaseActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	
 }
 
 // Called every frame
@@ -40,7 +34,7 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 
 	ensure( FlockingActorData != nullptr);
 
-	FlockingActorData->DistanceToTarget = (FlockingActorData->TargetLocation - FlockingActorData->Location).Length(); // ska inte vara här
+	FlockingActorData->DistanceToTarget = (FlockingActorData->TargetLocation - FlockingActorData->Location).Length();
 	if (FlockingActorData->bIsLeader)
 	{
 		FlockingMeshComponent->SetMaterial(0, LeaderMaterial);
@@ -48,10 +42,7 @@ void AFlockingBaseActor::Tick(float DeltaTime)
 	else
 	{
 		FlockingMeshComponent->SetMaterial(0, BasicMaterial);
-
-	}
-
-	
+	}	
 }
 
 void AFlockingBaseActor::UpdateLocation(float DeltaTime)
@@ -61,7 +52,6 @@ void AFlockingBaseActor::UpdateLocation(float DeltaTime)
 		FlockingActorData->Location = GetActorLocation(); 
 		SetActorLocation(FlockingActorData->Location + FlockingActorData->Velocity * DeltaTime);		
 	}
-	
 }
 
 void AFlockingBaseActor::SetFlockingDataPointer(FFlockingActorData& Pointer)

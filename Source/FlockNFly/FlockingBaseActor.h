@@ -11,13 +11,6 @@ class AFlockNFlyCharacter;
 struct FFlockingActorData;
 class AFlockingBrain;
 
-/**
- *
- * Ju närmare obsticle desto starkare färg
- * Leader markeras med färg
- * 
- * 
- */
 
 UCLASS()
 class FLOCKNFLY_API AFlockingBaseActor : public AActor
@@ -36,7 +29,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
-
 	/** Static mesh comp*/
 	UPROPERTY(EditAnywhere, Category="Mesh")
 	UStaticMeshComponent* FlockingMeshComponent;
@@ -66,7 +58,6 @@ private:
 
 	/** Bool for checking if flocking data struct has been set*/
 	bool bHasEntityDataBeenSet = false;
-	
 	
 };
 

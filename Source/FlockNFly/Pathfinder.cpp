@@ -4,90 +4,13 @@
 #include "FlockingHeap.h"
 #include "FlockingNode.h"
 #include "FlockNFlyCharacter.h"
+#include "NodeFunctions.h"
 
 Pathfinder::Pathfinder(APawn* PlayerActor, AFlockingGrid* MapGrid) : PlayerPawn(PlayerActor), Grid(MapGrid)
 {
 	PlayerCharacter = Cast<AFlockNFlyCharacter>(PlayerPawn);
 	ensure(PlayerCharacter != nullptr);
 	
-}
-
-Pathfinder::~Pathfinder()
-{
-	//delete OpenSet;
-}
-
-namespace NodeFunctions
-{
-	int GetDistanceBetweenNodes(const FlockingNode* NodeA, const FlockingNode* NodeB)
-	{
-		const int DistanceX = FMath::Abs(NodeA->GridX - NodeB->GridX);
-		const int DistanceY = FMath::Abs(NodeA->GridY - NodeB->GridY);
-		const int DistanceZ = FMath::Abs(NodeA->GridZ - NodeB->GridZ);
-		
-		if (DistanceX >= DistanceY && DistanceX >= DistanceZ)
-		{
-			// X is the longest distance
-			return 14 * DistanceY + 10 * (DistanceX - DistanceY) + 14 * DistanceZ;
-		}
-		if (DistanceY >= DistanceX && DistanceY >= DistanceZ)
-		{
-			// Y is the longest distance
-			return 14 * DistanceX + 10 * (DistanceY - DistanceX) + 14 * DistanceZ;
-		}
-		// Z is the longest distance
-		return 14 * DistanceX + 14 * DistanceY + 10 * (DistanceZ - DistanceX);
-	}
-
-	
-	TArray<FVector> SimplifyPath(const TArray<FlockingNode*>& Path)
-	{
-		TArray<FVector> Waypoints;
-		FVector DirectionOld = FVector::ZeroVector;
-
-		for (int32 i = 1; i < Path.Num(); i++)
-		{
-			FVector DirectionNew = Path[i - 1]->GetWorldCoordinate() - Path[i]->GetWorldCoordinate();
-			DirectionNew.Normalize();
-
-			if (!DirectionNew.Equals(DirectionOld, KINDA_SMALL_NUMBER))
-			{
-				Waypoints.Add(Path[i]->GetWorldCoordinate());
-			}
-
-			DirectionOld = DirectionNew;
-		}
-
-		return Waypoints;
-	}
-
-
-	//TArray<FlockingNode*> RetracePath(const FlockingNode* NodeA,  FlockingNode* NodeB)
-	TArray<FVector> RetracePath(const FlockingNode* NodeA,  FlockingNode* NodeB)
-	{
-		TArray<FlockingNode*> Path;
-		FlockingNode* Current = NodeB;
-
-		while(Current != NodeA)
-		{
-			Path.Add(Current);
-			Current = Current->ParentNode;
-		}
-		TArray<FVector> Waypoints = SimplifyPath(Path);
-		return Waypoints;
-	}
-
-	/**Checks if moving from Current to NextNode would be a diagonal move, if any coordinate is same in Next och Current there is no diagonal move */
-	bool IsMovingDiagonally(const FlockingNode* Current, const FlockingNode* Next)
-	{
-		return !(Current->GridX == Next->GridX || Current->GridY == Next->GridY || Current->GridZ == Next->GridZ); 
-	}
-
-	/** Gets cost from current to next*/
-	int GetCostToNode(const FlockingNode* Current, const FlockingNode* Next)
-	{
-		return IsMovingDiagonally(Current, Next) ? 14 : 10; 
-	}
 }
 
 void Pathfinder::UpdateNodesFlowField()
@@ -150,7 +73,7 @@ void Pathfinder::UpdateNodesFlowField()
 	bIsDirectionInUnWalkableNodesSet = true; // set to true so it is only checked/set once 
 }
 
-bool Pathfinder::FindPath(FVector &Start, FVector &End)
+bool Pathfinder::FindPath(const FVector &Start, const FVector &End)
 {
 	TArray<FVector> NewPath;
 	//if (Grid->TargetLocation == FVector::ZeroVector || Grid->StartLocation == FVector::ZeroVector)
@@ -185,8 +108,8 @@ bool Pathfinder::FindPath(FVector &Start, FVector &End)
 
 	bool bPathSuccess = false;
 
-	// here you could check that startnode is walkable as well, but because the flocking entities have a float-like behaviour sometimes
-	// they wouldnt be able to get out of collision if they were in one. 
+	// here you could check that start node is walkable as well, but because the flocking entities have a float-like behaviour sometimes
+	// they wouldn't be able to get out of collision if they were in one. 
 	if (EndNode->bWalkable)
 	{
 		// Create open and closed sets, should probably be something else or not created every time
@@ -223,7 +146,7 @@ bool Pathfinder::FindPath(FVector &Start, FVector &End)
 	            }
 	        	
 	            // Calculate tentative GCost from the start node to this neighbor
-	            int NewMovementCostToNeighbour = CurrentNode->GetGCost() + NodeFunctions::GetDistanceBetweenNodes(CurrentNode, Neighbour) + CurrentNode->MovementPenalty;
+	            const int NewMovementCostToNeighbour = CurrentNode->GetGCost() + NodeFunctions::GetDistanceBetweenNodes(CurrentNode, Neighbour) + CurrentNode->MovementPenalty;
 	            // If this path is better than the previous one, update the neighbor
 	            if (NewMovementCostToNeighbour < Neighbour->GetGCost() || !OpenSet.Contains(Neighbour))
 	            {
@@ -255,7 +178,7 @@ bool Pathfinder::FindPath(FVector &Start, FVector &End)
 	bHasPath = false;
 	return false;
 }
-void Pathfinder::ResetFlowFieldNodeCosts()
+void Pathfinder::ResetFlowFieldNodeCosts() const
 {
 	for(int x = 0; x < Grid->GridLengthX; x++)
 	{
@@ -269,12 +192,12 @@ void Pathfinder::ResetFlowFieldNodeCosts()
 	}
 }
 
-void Pathfinder::SetDirectionInUnWalkableNode(FlockingNode* NeighbourNode)
+void Pathfinder::SetDirectionInUnWalkableNode(FlockingNode* NeighbourNode) const 
 {
 	// to find lowest cost, set lowest cost to max value
 	int LowestCostAwayFromNode = INT_MAX;
-	// check all neighbours. If naiogbour has a lower cost than lowest and is walkable, set direction to it
-	for (FlockingNode* NeighboursNeighbour : Grid->GetNeighbours(NeighbourNode))
+	// check all neighbours. If neighbour has a lower cost than lowest and is walkable, set direction to it
+	for (const FlockingNode* NeighboursNeighbour : Grid->GetNeighbours(NeighbourNode))
 	{
 		const int CostToNeighbour = NodeFunctions::GetCostToNode(NeighbourNode, NeighboursNeighbour);
 		if (NeighboursNeighbour->IsWalkable() && CostToNeighbour < LowestCostAwayFromNode)

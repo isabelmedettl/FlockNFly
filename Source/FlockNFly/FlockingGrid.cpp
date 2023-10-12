@@ -115,36 +115,7 @@ float AFlockingGrid::GetNodeRadius() const
 	return NodeRadius;
 }
 
-
-bool AFlockingGrid::PathSuccessful(TArray<FVector> PathWaypoints) const
-{
-	return PathWaypoints.Num() > 0;
-}
-
-
-FVector AFlockingGrid::GetWaypointAtIndex(int Index, TArray<FVector> PathWaypoints) const
-{
-	if (Index >= 0 && Index < PathWaypoints.Num())
-	{
-		return PathWaypoints[Index];
-	}
-	// Return an invalid vector if the index is out of range.
-	UE_LOG(LogTemp, Warning, TEXT("Invalid index"));
-	return FVector::ZeroVector;
-}
-
-bool AFlockingGrid::IsWaypointAtIndexValid(int Index, TArray<FVector> PathWaypoints) const
-{
-	return Index >= 0 && Index < PathWaypoints.Num();
-}
-
-
-int AFlockingGrid::GetPathLength(TArray<FVector> PathWaypoints) const
-{
-	return PathWaypoints.Num();
-}
-
-void AFlockingGrid::OnDebugPathDraw(TArray<FVector> PathWaypoints)
+void AFlockingGrid::OnDebugPathDraw(const TArray<FVector> PathWaypoints)
 {
 	
 	if (PathWaypoints.Num() != 0)
@@ -255,7 +226,7 @@ int AFlockingGrid::GetIndex(const int IndexX, const int IndexY, const int IndexZ
 }
 
 
-FlockingNode* AFlockingGrid::GetNodeFromWorldLocation(FVector NodeWorldLocation) 
+FlockingNode* AFlockingGrid::GetNodeFromWorldLocation(const FVector &NodeWorldLocation) const
 {
 	// position relative to grids bottom left corner 
 	const float GridRelativeX = NodeWorldLocation.X  - GridBottomLeftLocation.X; 
